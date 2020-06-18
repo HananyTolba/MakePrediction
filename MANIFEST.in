@@ -1,0 +1,8 @@
+recursive-include gpasdlm/LICENSE 
+recursive-include gpasdlm/Examples
+recursive-include gpasdlm/ *.txt
+recursive-include gpasdlm/tests *.py
+recursive-include gpasdlm/keras_600 *.hdf5
+
+
+
