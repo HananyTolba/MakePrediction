@@ -69,7 +69,7 @@ __all__ = ["GaussianProcessRegressor","RBF","Matern52",
 path_list = list(filter(lambda x: x.endswith('site-packages') ,sys.path))
 path = path_list[0]
 
-path = path + '/gpasdlm/keras_600'
+path = path + '/gpasdlm/gpTFModels'
 #path = path + '/keras_600'
 
 
@@ -85,11 +85,11 @@ class_names = ['Linear', 'Linear + Periodic', 'Periodic', 'Polynomial',
        'Stationary + Periodic']
 
 
-path_predict_model = path + '/predict_gpr_model.hdf5'
+#path_predict_model = path + '/predict_gpr_model.hdf5'
 #model_expression = keras.models.load_model("/Users/tolba/Desktop/gpasdlm/keras_600/predict_gpr_model.hdf5")
 
-model_expression = load_model(path_predict_model)
-probability_model = tf.keras.Sequential([model_expression, tf.keras.layers.Softmax()])
+#model_expression = load_model(path_predict_model)
+#probability_model = tf.keras.Sequential([model_expression, tf.keras.layers.Softmax()])
 
 path_periodic = os.path.join(path, "periodic_1d_300.hdf5")
 #print(path_periodic)
@@ -417,60 +417,6 @@ class GaussianProcessRegressor():
 
 
 
-
-
-    def expression_predict(self, prob=None):
-
-        
-        x,y = self._xtrain,self._ytrain
-
-        y = (y-y.mean())/y.std()
-        
-        #f = interp1d(x, y)
-        #xnew = np.linspace(x.min(), x.max(), num=300, endpoint=True)
-        #ynew = f(xnew)
-
-
-        x_interp = np.linspace(-3, 3, 300)
-
-        
-        x_transform, a, b = self.line_transform(x.reshape(-1, 1))
-
-        y_interp = np.interp(x_interp, x_transform, y)
-
-
-        #x_interp = np.linspace(-1,1,300)
-        ynew = y_interp
-        
-
-        #plt.plot(x,y)
-        #plt.plot(x_interp,ynew)
-
-        #plt.plot(x_interp,ynew)
-        #plt.show()
-
-        prob_predictions = GaussianProcessRegressor.probability_model.predict(ynew.reshape(1,300))
-        prob_predictions = prob_predictions.ravel()
-        #print(np.round(prob_predictions,2))
-        pred_test = np.argmax(prob_predictions)
-        #prob_pred = np.round(prob_predictions,4)
-        res = dict(zip(class_names, prob_predictions.tolist())) 
-
-        df = pd.DataFrame.from_dict(res,orient='index',columns=["Probability"])
-        df = df.round(2)
-        df.sort_values(by=['Probability'], inplace=True,ascending=False)
-        #print(df)
-
-        if prob is None:
-            return class_names[pred_test]
-
-        elif prob == "dict":
-            return (class_names[pred_test], res)
-        elif prob == "df":
-            return (class_names[pred_test], df)
-        else:
-
-            return class_names[pred_test]
 
 
     
@@ -1084,42 +1030,4 @@ class GaussianProcessRegressor():
 
 
         return (y_pred.ravel(), std_pred.ravel())
-
-
-
-    # def fit_expr(self,model_expr):
-    #     #model_expr = "Linear  +  Periodic +    RBF"
-    #     x,yn = self._xtrain,self._ytrain
-    #     model_expr = model_expr.replace(" ", "")
-    #     cmp = model_expr.split("+")
-    #     #print(cmp)
-    #     module_ = importlib.import_module("gpasdlm.kernels")
-    #     gprs = []
-    #     data = yn
-    #     for ker_name in cmp:
-    #         class_ = getattr(module_, ker_name)
-    #         instance = class_()
-    #         #print(instance)
-
-    #         #gpr = GPR(x,data)
-    #         self._ytrain = data
-    #         self._kernel = instance
-    #         self.fit()
-    #         #print(gpr)
-    #         newobj = copy.copy(self)
-    #         gprs.append(newobj)
-
-    #         yfit,_ = self.predict()
-    #         data =  data - yfit
-    #         #gpr._ytrain = data 
-
-    #     return gprs
-
-    # #def predict_expr(self,xs,gprs):
-    # def predict_expr(self,gprs, xt=None, yt=None, horizon=None,option=None, sparse = None, sparse_size=None):
-    #     list_pred_pstd =[self.predict(xt) for mdl in  gprs]
-    #     yp,std = np.array(list_pred_pstd).sum(axis=0)
-    #     return yp,std
-
-
 

@@ -29,7 +29,14 @@ __all__ = ["RBF",
 
 class Kernel:
     '''
-    The 'Kernel' class modeling the kernel of a Gaussian process. It has several attributes and methods.
+    A covariance function or kernel encodes our assumptions about the
+    function which we wish to learn. This initial belief could
+    be how smooth the function is or whether the function
+    is periodic. Any function could be a covariance function as long
+    as the resulting covariance matrix is positive semi-definite.
+    The 'Kernel' super class modeling the kernel of a Gaussian process.
+    This is the parent class that all classes (RBF, Matern, Periodic, ...) will inherit. 
+    It has several attributes and methods.
     The 'count' method is the most important of them. It counts the kernel between two location vectors x1 and x2 as follows: self.count(x1,x2).
     '''
 
@@ -939,74 +946,26 @@ class KernelProduct(Kernel):
 
 if __name__ == "__main__":
     from gpbytf.kernels import *
-    from gpbytf.gaussianprocess import GaussianProcessRegressor as GP
     import numpy as np
     import matplotlib.pyplot as plt
-    from tqdm import tqdm
-    x = np.linspace(0,10,1000)
+    x = np.linspace(0,3,1000)
 
-    # x1 = np.linspace(0,1,300)
-
-    # for i in tqdm(range(1000)):
-    #     y = Polynomial().simulate(x)
-    # z = Polynomial().simulate(x)
-    # #mdl = ChangePointLinear()
-    # #mdl.count(x,x1)
-
-    # plt.plot(x,y)
-    # plt.plot(x,z)
-    # plt.show()
+  
+    kernel =  RBF(length_scale = .5)
+    kernel =  RBF(length_scale = .5, variance = 1.5)
+    kernel =  Matern52(length_scale = .8,variance = 10)
+    kernel =  Periodic(length_scale = .5, period = .5) + Linear() 
+    kernel =  Periodic(length_scale = .5, period = .5) + RBF() 
 
 
-    # x1 = np.linspace(-3,3,100)
-    # x2 = np.linspace(0,6,110)
-
-    # x3 = np.linspace(-1,1,40)
-
-    # #y =RBF().simulate_2d(x1=x1,hyperparameters=[{"length_scale":.4},{"length_scale":.9}],x2=x2)
-    # h=[{"length_scale":.4},{"length_scale":.7}]
-    # h = [{"length_scale":.9}]
-
-    # y =RBF().simulate_2d(x1=x1,hyperparameters=h)
-
-    # ll=[{"length_scale":1},{"length_scale":.4},{"length_scale":.5}]
-    # #ll = [{"length_scale":.9}]
-    # y =RBF().simulate_3d(x1=x1,x2=x2,x3=x3,hyperparameters=ll)
-    # print(y.shape)
-    # #plt.pcolor(x2,x1,y,cmap='jet')
-    # plt.imshow(y[:,:,20],cmap='jet')
-    # #plt.imshow(y,cmap='jet')
-
-    # plt.show()
-
-
-    #rbf = RBF(length_scale=.123456789)
-    #per = Periodic(length_scale=.123456789,period=.123456789)
-    #print(rbf.label())
-    #print(per)
-    #np.random.seed(1)
-    #ks =    RBF(2.5)
-    #d = [{"length_scale":np.random.rand(1),"variance" : np.random.rand(1)},{"length_scale":np.random.rand(1),"variance":np.random.rand(1)}]
-
-    kernel =  RBF(.3)
-
-    np.random.seed(0)
-
-    #kernel.set_hyperparameters(d)
-
-
-
-    #ks = RBF(1)
-    #ks =   Linear(0) 
-    #print(ks.__dict__ )
-    #ks =  Constant(5) 
-    y0 = kernel.simulate(x)
+    #
+    y0 = kernel.simulate(x,seed = np.random.seed(0))
 
     y = y0 + .2*np.random.randn(x.size)
 
     plt.figure(figsize=(10,5))
     plt.plot(x,y,'ok',label= "Data")
-    plt.plot(x,y0,'r',label = "True Gaussian Process")
+    plt.plot(x,y0,'r',label = "Simulated gp with '{}' kernel function".format(kernel.label()))
     plt.legend()
     plt.show()
 
