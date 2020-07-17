@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# __author__ = "Hanany Tolba"
+# __copyright__ = "Copyright 2020, Guassian Process as Deep Learning Model Project"
+# __credits__ = "Hanany Tolba"
+# __license__ = "Apache License 2.0"
+# __version__ ="0.1"
+# __maintainer__ = "Hanany Tolba"
+# __email__ = "hananytolba@yahoo.com"
+# __status__ = "4 - Beta"
+
 
 
 """
@@ -35,9 +44,9 @@ setup(
     # https://help.github.com/articles/licensing-a-repository
     license="Apache License 2.0",
     description="Fast and easy gaussian process regression using deep learning with tensorflow",
-    author='TOLBA Hannay', 
+    author=__author__, 
     long_description = __doc__,                 # Type in your name
-    author_email="hanany100@gmail.com",
+    author_email=__email__,
     # Provide either the link to your github or to your website
     url='https://github.com/hananytolba',
     download_url='https://github.com/hananytolba',    # I explain this later on
