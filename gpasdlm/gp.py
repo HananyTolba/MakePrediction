@@ -91,7 +91,7 @@ class_names = ['Linear', 'Linear + Periodic', 'Periodic', 'Polynomial',
 #model_expression = load_model(path_predict_model)
 #probability_model = tf.keras.Sequential([model_expression, tf.keras.layers.Softmax()])
 
-path_periodic = os.path.join(path, "periodic_1d_300.hdf5")
+path_periodic = os.path.join(path, "periodic_1d.hdf5")
 #print(path_periodic)
 K.clear_session()
 newModel = load_model(path_periodic)
@@ -1031,3 +1031,31 @@ class GaussianProcessRegressor():
 
         return (y_pred.ravel(), std_pred.ravel())
 
+
+if __name__ == "__main__":
+    from gpbytf.kernels import *
+    from gpbytf.gaussianprocess import GaussianProcessRegressor as GP
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from tqdm import tqdm
+    x = np.linspace(0,3,1000)
+
+  
+    kernel =  RBF(length_scale = .5)
+    kernel =  RBF(length_scale = .5, variance = 1.5)
+    
+
+    #
+    y0 = kernel.simulate(x,seed = np.random.seed(0))
+
+    y = y0 + .2*np.random.randn(x.size)
+
+
+
+    plt.figure(figsize=(10,5))
+    plt.plot(x,y,'ok',label= "Data")
+    plt.plot(x,y0,'r',label = "Simulated gp with '{}' kernel function".format(kernel.label()))
+    plt.legend()
+    plt.show()
+
+    
