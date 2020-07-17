@@ -6,15 +6,16 @@ from gpasdlm import kernels
 from gpasdlm import gp
 from gpasdlm import invtools
 
+from gpasdlm import version 
 
 __all__ = ["gp","kernels","invtools",]
 
 
-__author__ = "Hanany Tolba"
-__copyright__ = "Copyright 2020, Guassian Process as Deep Learning Model Project"
-__credits__ = ["Hanany Tolba"]
-__license__ = "Apache License 2.0"
-__version__ = "0.1"
-__maintainer__ = "Hanany Tolba"
-__email__ = "hanany100@gmail.com"
-__status__ = "4 - Beta"
+__author__ = version.__author__
+__copyright__ = version.__copyright__
+__credits__ = version.__credits__
+__license__ = version.__license__
+__version__ = version.__version__
+__maintainer__ = version.__maintainer__
+__email__ = version.__email__
+__status__ = version.__status__

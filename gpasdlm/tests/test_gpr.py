@@ -3,15 +3,15 @@
 
 from gpasdlm.kernels import *
 from gpasdlm.kernels import KernelSum, KernelProduct
-from gpasdlm.gaussianprocess import GaussianProcessRegressor as GPR
+from gpasdlm.gp import GaussianProcessRegressor as GPR
 
 import pytest
 import numpy as np
 from numpy.testing import assert_almost_equal
-from keras.models import load_model
-import keras
+#from tensorflow.keras.models import load_model
+#from tensorflow import keras
 
-
+import tensorflow
 
 
 
@@ -23,20 +23,21 @@ y = f(x).ravel()
 kers =["periodic","matern12","linear","matern32","rbf","matern52","polynomial"]
 @pytest.mark.parametrize('kernel', kers)
 def test_gpr_kernel_choice(kernel):
-	gpr = GPR()
+	gpr = GPR(x,y)
 	gpr.kernel_choice = kernel
 	assert gpr._kernel.__class__.__name__.upper()== kernel.upper()
 
 @pytest.mark.parametrize('kernel', kers)
 def test_tf_model(kernel):
-    gpr = GPR()
+    gpr = GPR(x,y)
     gpr.kernel_choice = kernel
-    assert isinstance(gpr._model,keras.engine.sequential.Sequential)
+    print(type(gpr._model))
+    assert isinstance(gpr._model,tensorflow.keras.Sequential)
 
 
 @pytest.mark.parametrize('kernel', kers)
 def test_get_hyperparameters(kernel):
-    gpr = GPR()
+    gpr = GPR(x,y)
     gpr.kernel_choice = kernel
     parms = gpr.get_hyperparameters()
     if kernel == "periodic":
@@ -51,7 +52,7 @@ def test_get_hyperparameters(kernel):
 
 @pytest.mark.parametrize('kernel', kers)
 def test_set_hyperparameters(kernel):
-    gpr = GPR()
+    gpr = GPR(x,y)
     gpr.kernel_choice = kernel
     parms_per = {"length_scale":.5,"period":.5, "variance":2} 
     parms = {"length_scale":.5,"variance":2} 
@@ -73,14 +74,14 @@ kernels =["rbf","matern12","matern32","matern52"]
 @pytest.mark.parametrize('kernel', kernels)
 def test_prediction(kernel):
     #kernel = "rbf"
-    gpr = GPR()
+    gpr = GPR(x,y)
     gpr.kernel_choice = kernel
     #gpr.std_noise =.001
     # Test the interpolating property for different kernels.
-    gpr.fit(x, y)
+    gpr.fit()
     gpr.std_noise =.0001
 
-    y_pred, y_cov = gpr.predict(x,y)
+    y_pred, y_cov = gpr.predict()
     #print(y_pred,"y : ", y)
 
     assert_almost_equal(y_pred, y,decimal = 5)
@@ -94,18 +95,20 @@ def test_prediction(kernel):
 #     # Test the interpolating property for different kernels.
 #     assert gpr.simulate(x)
 
-A = np.random.RandomState(314).normal(0, 1, (4,4))
-A = A + A.T
-m = np.random.RandomState(314).normal(0, 1, (4,1))
-r = np.array([1.])
 
-inv_A = np.linalg.inv(A)
+########################################################
+# A = np.random.RandomState(314).normal(0, 1, (4,4))
+# A = A + A.T
+# m = np.random.RandomState(314).normal(0, 1, (4,1))
+# r = np.array([1.])
 
-A_augmented = np.block([[A, m], [m.T, r]])
-gpr = GPR()
-inv_A_augmented = gpr._inv_add_update(inv_A, m, r)
-def test_invupdate():
-    A_augmented
-    assert_almost_equal(inv_A_augmented,np.linalg.inv(A_augmented))
+# inv_A = np.linalg.inv(A)
+
+# A_augmented = np.block([[A, m], [m.T, r]])
+# gpr = GPR(x,y)
+# inv_A_augmented = gpr._inv_add_update(inv_A, m, r)
+# def test_invupdate():
+#     A_augmented
+#     assert_almost_equal(inv_A_augmented,np.linalg.inv(A_augmented))
 
 

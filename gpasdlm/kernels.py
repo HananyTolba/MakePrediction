@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# __author__ = "Hanany Tolba"
 
 
 #from __future__ import absolute_import
@@ -10,14 +11,7 @@ import numpy as np
 #def func_(s): return ' '.join(re.sub(r"([A-Z])", r" \1", s).split())
 
 
-# __author__ = "Hanany Tolba"
-# __copyright__ = "Copyright 2020, Guassian Process by Deep Learning Project"
-# __credits__ = ["Hanany Tolba"]
-# __license__ = "Apache License 2.0"
-# __version__ = "0.0.1"
-# __maintainer__ = "Hanany Tolba"
-# __email__ = "hanany100@gmail.com"
-# __status__ = "Production"
+
 
 __all__ = ["RBF",
            "Matern12",
@@ -35,15 +29,13 @@ __all__ = ["RBF",
 
 class Kernel:
     '''
-    La classe 'Kernel' modèlisant le kernel d'un Gaussian process.
-    et qui possédes plusieurs attribues et une seule méthode  "count"
-    qui permet de calculer le kernel entre  deux vecteurs de localisations x et y comme suit
-    : self.count(x,y) '''
+    The 'Kernel' class modeling the kernel of a Gaussian process. It has several attributes and methods.
+    The 'count' method is the most important of them. It counts the kernel between two location vectors x1 and x2 as follows: self.count(x1,x2).
+    '''
 
     def __init__(self, length_scale=1,variance = 1,hyperparameter_number=2):
         '''
-        Le constructeur ne contient par defaut qu'un seul attribut
-        le length_scale qui modèlise la correlation
+       
         '''
         self._variance = variance
         self._length_scale = length_scale
@@ -56,7 +48,7 @@ class Kernel:
     #def __repr__(self):
     #    return "Instance of class '{}'".format(self.__class__.__name__)
 
-    def __str__(self):
+    def __str__(self) -> str:
         #if hyperparameters == True:
         return "({}: length_scale = {}, variance = {})".format(self.__class__.__name__,\
          self._length_scale,self._variance)
@@ -68,14 +60,25 @@ class Kernel:
     #    return self.__class__.__name__
 
 
-    def get_length_scale(self):
+    def get_length_scale(self) -> float:
+        '''
+        Get the length_scale value of kernel.
+        '''
         return self._length_scale
 
     # @get_length_scale.setter
-    def set_length_scale(self, length_scale):
+    def set_length_scale(self, length_scale: float):
+        '''
+        Set a length_sclae value
+        '''
         self._length_scale = length_scale
 
-    def radial_dist(self, x, y=None):
+    def radial_dist(self, x: 'numpy array', y: 'numpy array' = None) -> 'numpy array': 
+
+        '''
+        Count the radial distance.
+        '''
+
         x = x.ravel()
 
         if y is None:
@@ -85,7 +88,7 @@ class Kernel:
         r = np.abs(x - y.reshape(-1, 1))
         return r
 
-    def get_hyperparameters(self):
+    def get_hyperparameters(self) -> dict:
         d = self.__dict__
         parms = dict()
         for cle,valeur in d.items():
@@ -96,7 +99,7 @@ class Kernel:
 
         ##return getattr(self._kernel)
 
-    def set_hyperparameters(self,dic):
+    def set_hyperparameters(self,dic: dict):
         for cle in self.__dict__.keys():
             if cle != "_hyperparameter_number":
                 setattr(self, cle, dic[cle.lstrip('_')])
@@ -106,21 +109,21 @@ class Kernel:
     #    r = self.__class__.__name__
     #    return r
 
-    def label(self):
-        if self.__class__.__name__ == "KernelProduct":
-            r = self.recursive_kernel1()
-            r = list(map(lambda x: x.__class__.__name__,r))
-            r = " x ".join(r)
-        elif self.__class__.__name__ == "KernelSum":
-            r = self.recursive_kernel1()
-            r = list(map(lambda x: x.__class__.__name__,r))
-            r = " + ".join(r)
+    # def label(self):
+    #     if self.__class__.__name__ == "KernelProduct":
+    #         r = self.recursive_kernel1()
+    #         r = list(map(lambda x: x.__class__.__name__,r))
+    #         r = " x ".join(r)
+    #     elif self.__class__.__name__ == "KernelSum":
+    #         r = self.recursive_kernel1()
+    #         r = list(map(lambda x: x.__class__.__name__,r))
+    #         r = " + ".join(r)
            
-        else:
-            r = self.__class__.__name__
+    #     else:
+    #         r = self.__class__.__name__
         
 
-        return r
+    #     return r
 
     
 
@@ -150,30 +153,64 @@ class Kernel:
         
 
 
+    def recursive_str_list(self)-> list:
+        L = ["RBF","Periodic","Matern32","Matern12","Matern52","Linear","Polynomial"]
 
-
-
-
-    def recursive_kernel1(self):
         kernel_list = []
-        signs = []
-        for v in self.__dict__.values():
-            if v.__class__.__name__ == "KernelProduct":
-                kernel_list.extend(v.recursive_kernel1())
+        if self.__class__.__name__ in L:
+            kernel_list = self.__class__.__name__
+        elif self.__class__.__name__ == "KernelProduct":
+            P = self.__repr__()
+            P = P.replace('Instance of class','').replace("'",'').strip()
+            kernel_list = P
+        # elif self.__class__.__name__ == "KernelSum": 
+        #     P = self.__repr__()
+        #     P = P.replace('Instance of class','').replace("'",'').strip()
+        #     kernel_list = P
 
-            elif v.__class__.__name__ in ["int","float"]:
-                pass
-            elif v.__class__.__name__ == "KernelSum":
-                kernel_list.extend(v.recursive_kernel1())
-            
-            else:
-                kernel_list.append(v)
-            
+        else:
+            for v in list(self.__dict__.values()):
+                if v.__class__.__name__ == 'KernelSum':
+                    kernel_list.extend(v.recursive_str_list())
+                elif v.__class__.__name__ == 'int':
+                    pass
+                elif v.__class__.__name__ in L:
+                    kernel_list.append(v.__class__.__name__)
+                elif v.__class__.__name__ == 'KernelProduct':
+                    p = v.__repr__()
+                    p = p.replace('Instance of class','').replace("'",'').strip()
+                    kernel_list.append(p)
+        #print(kernel_list)
+                
         return kernel_list
+            
+    def lable(self) -> str:
+        names = self.recursive_str_list()
+        return ' + '.join(names) if isinstance(names,list) else names
 
-    def label_(self):
-        f = self.label()
-        return f.split("+")
+
+
+
+    # def recursive_kernel1(self):
+    #     kernel_list = []
+    #     signs = []
+    #     for v in self.__dict__.values():
+    #         if v.__class__.__name__ == "KernelProduct":
+    #             kernel_list.extend(v.recursive_kernel1())
+
+    #         elif v.__class__.__name__ in ["int","float"]:
+    #             pass
+    #         elif v.__class__.__name__ == "KernelSum":
+    #             kernel_list.extend(v.recursive_kernel1())
+            
+    #         else:
+    #             kernel_list.append(v)
+            
+    #     return kernel_list
+
+    # def label_(self):
+    #     f = self.label()
+    #     return f.split("+")
 
     # def label1(self):
     #     if self.__class__.__name__ == "KernelProduct":
@@ -190,7 +227,7 @@ class Kernel:
     #     return r
 
     #@staticmethod
-    def square_root_matrix(self,K):
+    def square_root_matrix(self,K: "numpy array") -> "numpy array":
 
         if self.__class__.__name__ == "Constant":
             Q = np.sqrt(K)
@@ -207,7 +244,7 @@ class Kernel:
 
     
 
-    def simulate(self, x, y=None,seed=None):
+    def simulate(self, x: "numpy vector", y: "numpy vector" = None,seed=None) ->  "numpy vector":
         '''
          This method allows the simulation of a Gaussian process (1d) on a domain x.
         '''
@@ -240,9 +277,9 @@ class Kernel:
 
 
 
-    def simulate_2d(self,x1,x2=None,hyperparameters=None, seed=None):
+    def simulate2d(self,x1: "numpy vector",x2: "numpy vector" =None,hyperparameters:dict = None, seed=None) -> "numpy array":
         '''
-         This method allows the simulation of a Gaussian process (1d) on a domain x.
+         This method allows the simulation of a 2d separable Gaussian process  on a domain D in R^2.
         '''
         
         x1 = x1.ravel()
@@ -333,196 +370,232 @@ class Kernel:
             
         return y 
 
-
-
-    def simulate_3d(self,x1,x2=None,x3=None,hyperparameters=None):
+    def simulate3d(self,space:  "list of numpy vectors",time: "numpy vector" = None,space_kernel: "kernel instance" =None,time_kernel:"kernel instance" = None,time_hyperparameters:dict = None,space_hyperparameters: dict = None) -> "numpy array":
         '''
-         This method allows the simulation of a Gaussian process (1d) on a domain x.
+        This method allows the simulation of a 3d separable Gaussian process or a spatiotemporal gaussian process on a domain D in R^3.
+
         '''
-        
-        x1 = x1.ravel()
-        m1 = x1.size
+        if time_kernel is None:
+            time_kernel = self
 
+        if space_kernel is None:
+            space_kernel = self 
 
-        
-        if hyperparameters is None:
-            
-            if ((x2 is None)&(x3 is None)):
-                K1 = self.count(x1)
-                Q1 = self.square_root_matrix(K1)
-                iid = np.random.randn(m1**2,m1)
-                y = np.kron(Q1,Q1) @ iid @ Q1.T
-                m2=m3=m1
-            elif x3 is None:
-                x2 = x2.ravel()
-                m2 = x2.size
-                K1 = self.count(x1)
-                Q1 = self.square_root_matrix(K1)
-                K2 = self.count(x2)
-                Q2 = self.square_root_matrix(K2)
-                iid = np.random.randn(m1*m2,m1)
-                y = np.kron(Q1,Q2) @ iid @ Q1.T
-                m3=m1
+        if time is None:
+            time = space
 
-            elif x2 is None:
-                x3 = x3.ravel()
-                m3 = x3.size
-                K1 = self.count(x1)
-                Q1 = self.square_root_matrix(K1)
-                K3 = self.count(x3)
-                Q3 = self.square_root_matrix(K3)
-                iid = np.random.randn(m1**2,m3)
-                y = np.kron(Q1,Q1) @ iid @ Q3.T
-                m2=m1
-
-            else:
-                x2 = x2.ravel()
-                m2 = x2.size
-                x3 = x3.ravel()
-                m3 = x3.size
-                K1 = self.count(x1)
-                Q1 = self.square_root_matrix(K1)
-                K2 = self.count(x2)
-                Q2 = self.square_root_matrix(K2)
-                K3 = self.count(x3)
-                Q3 = self.square_root_matrix(K3)
-                iid = np.random.randn(m1*m2,m3)
-                y = np.kron(Q1,Q2) @ iid @ Q3.T
-
-
-
-
-
-
-        elif isinstance(hyperparameters,list):
-
-
-            if len(hyperparameters)==1:
-               
-                self.set_hyperparameters(hyperparameters[0])
-                if ((x2 is None)&(x3 is None)):
-                    K1 = self.count(x1)
-                    Q1 = self.square_root_matrix(K1)
-                    iid = np.random.randn(m1**2,m1)
-                    y = np.kron(Q1,Q1) @ iid @ Q1.T
-                    m2=m3=m1
-                elif x3 is None:
-                    x2 = x2.ravel()
-                    m2 = x2.size
-                    K1 = self.count(x1)
-                    Q1 = self.square_root_matrix(K1)
-                    K2 = self.count(x2)
-                    Q2 = self.square_root_matrix(K2)
-                    iid = np.random.randn(m1*m2,m1)
-                    y = np.kron(Q1,Q2) @ iid @ Q1.T
-                    m3=m1
-                elif x2 is None:
-                    x3 = x3.ravel()
-                    m3 = x3.size
-                    K1 = self.count(x1)
-                    Q1 = self.square_root_matrix(K1)
-                    K3 = self.count(x3)
-                    Q3 = self.square_root_matrix(K3)
-                    iid = np.random.randn(m1**2,m3)
-                    y = np.kron(Q1,Q1) @ iid @ Q3.T
-                    m2=m1
-                else:
-                    x2 = x2.ravel()
-                    m2 = x2.size
-                    x3 = x3.ravel()
-                    m3 = x3.size
-                    K1 = self.count(x1)
-                    Q1 = self.square_root_matrix(K1)
-                    K2 = self.count(x2)
-                    Q2 = self.square_root_matrix(K2)
-                    K3 = self.count(x3)
-                    Q3 = self.square_root_matrix(K3)
-                    iid = np.random.randn(m1*m2,m3)
-                    y = np.kron(Q1,Q2) @ iid @ Q3.T
-
-
-            elif len(hyperparameters)==3:
-                if ((x2 is None)&(x3 is None)):
-                    self.set_hyperparameters(hyperparameters[0])
-
-                    K1 = self.count(x1)
-                    Q1 = self.square_root_matrix(K1)
-                    self.set_hyperparameters(hyperparameters[1])
-
-                    K2 = self.count(x1)
-                    Q2 = self.square_root_matrix(K2)
-                    self.set_hyperparameters(hyperparameters[2])
-
-                    K3 = self.count(x1)
-                    Q3 = self.square_root_matrix(K3)
-
-                    iid = np.random.randn(m1**2,m1)
-                    y = np.kron(Q1,Q2) @ iid @ Q3.T
-                    m2=m3=m1
-                elif x3 is None:
-                    self.set_hyperparameters(hyperparameters[0])
-
-                    K1 = self.count(x1)
-                    Q1 = self.square_root_matrix(K1)
-                    self.set_hyperparameters(hyperparameters[1])
-                    x2 = x2.ravel()
-                    m2 = x2.size
-                    K2 = self.count(x2)
-                    Q2 = self.square_root_matrix(K2)
-                    self.set_hyperparameters(hyperparameters[2])
-
-                    K3 = self.count(x1)
-                    Q3 = self.square_root_matrix(K3)
-
-                    iid = np.random.randn(m1*m2,m1)
-                    y = np.kron(Q1,Q2) @ iid @ Q3.T
-                    m3=m1
-                elif x2 is None:
-                    self.set_hyperparameters(hyperparameters[0])
-
-                    K1 = self.count(x1)
-                    Q1 = self.square_root_matrix(K1)
-                    self.set_hyperparameters(hyperparameters[1])
-                    
-                    K2 = self.count(x1)
-                    Q2 = self.square_root_matrix(K2)
-                    self.set_hyperparameters(hyperparameters[2])
-                    x3 = x3.ravel()
-                    m3 = x3.size
-
-                    K3 = self.count(x3)
-                    Q3 = self.square_root_matrix(K3)
-
-                    iid = np.random.randn(m1**2,m3)
-                    y = np.kron(Q1,Q2) @ iid @ Q3.T
-                    m2=m1
-                else:
-                    self.set_hyperparameters(hyperparameters[0])
-
-                    K1 = self.count(x1)
-                    Q1 = self.square_root_matrix(K1)
-                    self.set_hyperparameters(hyperparameters[1])
-                    x2 = x2.ravel()
-                    m2 = x2.size
-                    K2 = self.count(x2)
-                    Q2 = self.square_root_matrix(K2)
-                    self.set_hyperparameters(hyperparameters[2])
-                    x3 = x3.ravel()
-                    m3 = x3.size
-
-                    K3 = self.count(x3)
-                    Q3 = self.square_root_matrix(K3)
-
-                    iid = np.random.randn(m1*m2,m3)
-                    y = np.kron(Q1,Q2) @ iid @ Q3.T
-            else:
-                raise ValueError("In the 'simulate_2d' method, the hyperparameters must be a list of  size 1 or 3.")
-
-
+        #t = x
+        if isinstance(space,list):
+            GP_st = [space_kernel.simulate2d(*space,hyperparameters=space_hyperparameters).ravel() for i in range(time.size)]
         else:
-            raise TypeError("In the 'simulate_2d' method, the hyperparameters must be a list.")
+            GP_st = [space_kernel.simulate2d(space,hyperparameters=space_hyperparameters).ravel() for i in range(time.size)]
+
+        GP_st = np.array(GP_st).T
+        #time_kernel = Periodic() + RBF()
+        if time_hyperparameters is not None: 
+            time_kernel.set_hyperparameters(time_hyperparameters)
+        K_time = time_kernel.count(time)
+        Q_time = time_kernel.square_root_matrix(K_time)
+        GP_st = GP_st@Q_time.T
+
+        if isinstance(space,list):
+            length_spaces = [sp.size for sp in space]
+            GP_st = GP_st.reshape(*length_spaces,time.size)
+        else:
+            GP_st = GP_st.reshape(space.size,space.size,time.size)
+
+
+
+        return GP_st
+
+    # def simulate_3d(self,x1,x2=None,x3=None,hyperparameters=None):
+    #     '''
+    #      This method allows the simulation of a Gaussian process (1d) on a domain x.
+    #     '''
+        
+    #     x1 = x1.ravel()
+    #     m1 = x1.size
+
+
+        
+    #     if hyperparameters is None:
             
-        return y.reshape(m1,m2,m3)
+    #         if ((x2 is None)&(x3 is None)):
+    #             K1 = self.count(x1)
+    #             Q1 = self.square_root_matrix(K1)
+    #             iid = np.random.randn(m1**2,m1)
+    #             y = np.kron(Q1,Q1) @ iid @ Q1.T
+    #             m2=m3=m1
+    #         elif x3 is None:
+    #             x2 = x2.ravel()
+    #             m2 = x2.size
+    #             K1 = self.count(x1)
+    #             Q1 = self.square_root_matrix(K1)
+    #             K2 = self.count(x2)
+    #             Q2 = self.square_root_matrix(K2)
+    #             iid = np.random.randn(m1*m2,m1)
+    #             y = np.kron(Q1,Q2) @ iid @ Q1.T
+    #             m3=m1
+
+    #         elif x2 is None:
+    #             x3 = x3.ravel()
+    #             m3 = x3.size
+    #             K1 = self.count(x1)
+    #             Q1 = self.square_root_matrix(K1)
+    #             K3 = self.count(x3)
+    #             Q3 = self.square_root_matrix(K3)
+    #             iid = np.random.randn(m1**2,m3)
+    #             y = np.kron(Q1,Q1) @ iid @ Q3.T
+    #             m2=m1
+
+    #         else:
+    #             x2 = x2.ravel()
+    #             m2 = x2.size
+    #             x3 = x3.ravel()
+    #             m3 = x3.size
+    #             K1 = self.count(x1)
+    #             Q1 = self.square_root_matrix(K1)
+    #             K2 = self.count(x2)
+    #             Q2 = self.square_root_matrix(K2)
+    #             K3 = self.count(x3)
+    #             Q3 = self.square_root_matrix(K3)
+    #             iid = np.random.randn(m1*m2,m3)
+    #             y = np.kron(Q1,Q2) @ iid @ Q3.T
+
+
+
+
+
+
+    #     elif isinstance(hyperparameters,list):
+
+
+    #         if len(hyperparameters)==1:
+               
+    #             self.set_hyperparameters(hyperparameters[0])
+    #             if ((x2 is None)&(x3 is None)):
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 iid = np.random.randn(m1**2,m1)
+    #                 y = np.kron(Q1,Q1) @ iid @ Q1.T
+    #                 m2=m3=m1
+    #             elif x3 is None:
+    #                 x2 = x2.ravel()
+    #                 m2 = x2.size
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 K2 = self.count(x2)
+    #                 Q2 = self.square_root_matrix(K2)
+    #                 iid = np.random.randn(m1*m2,m1)
+    #                 y = np.kron(Q1,Q2) @ iid @ Q1.T
+    #                 m3=m1
+    #             elif x2 is None:
+    #                 x3 = x3.ravel()
+    #                 m3 = x3.size
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 K3 = self.count(x3)
+    #                 Q3 = self.square_root_matrix(K3)
+    #                 iid = np.random.randn(m1**2,m3)
+    #                 y = np.kron(Q1,Q1) @ iid @ Q3.T
+    #                 m2=m1
+    #             else:
+    #                 x2 = x2.ravel()
+    #                 m2 = x2.size
+    #                 x3 = x3.ravel()
+    #                 m3 = x3.size
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 K2 = self.count(x2)
+    #                 Q2 = self.square_root_matrix(K2)
+    #                 K3 = self.count(x3)
+    #                 Q3 = self.square_root_matrix(K3)
+    #                 iid = np.random.randn(m1*m2,m3)
+    #                 y = np.kron(Q1,Q2) @ iid @ Q3.T
+
+
+    #         elif len(hyperparameters)==3:
+    #             if ((x2 is None)&(x3 is None)):
+    #                 self.set_hyperparameters(hyperparameters[0])
+
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 self.set_hyperparameters(hyperparameters[1])
+
+    #                 K2 = self.count(x1)
+    #                 Q2 = self.square_root_matrix(K2)
+    #                 self.set_hyperparameters(hyperparameters[2])
+
+    #                 K3 = self.count(x1)
+    #                 Q3 = self.square_root_matrix(K3)
+
+    #                 iid = np.random.randn(m1**2,m1)
+    #                 y = np.kron(Q1,Q2) @ iid @ Q3.T
+    #                 m2=m3=m1
+    #             elif x3 is None:
+    #                 self.set_hyperparameters(hyperparameters[0])
+
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 self.set_hyperparameters(hyperparameters[1])
+    #                 x2 = x2.ravel()
+    #                 m2 = x2.size
+    #                 K2 = self.count(x2)
+    #                 Q2 = self.square_root_matrix(K2)
+    #                 self.set_hyperparameters(hyperparameters[2])
+
+    #                 K3 = self.count(x1)
+    #                 Q3 = self.square_root_matrix(K3)
+
+    #                 iid = np.random.randn(m1*m2,m1)
+    #                 y = np.kron(Q1,Q2) @ iid @ Q3.T
+    #                 m3=m1
+    #             elif x2 is None:
+    #                 self.set_hyperparameters(hyperparameters[0])
+
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 self.set_hyperparameters(hyperparameters[1])
+                    
+    #                 K2 = self.count(x1)
+    #                 Q2 = self.square_root_matrix(K2)
+    #                 self.set_hyperparameters(hyperparameters[2])
+    #                 x3 = x3.ravel()
+    #                 m3 = x3.size
+
+    #                 K3 = self.count(x3)
+    #                 Q3 = self.square_root_matrix(K3)
+
+    #                 iid = np.random.randn(m1**2,m3)
+    #                 y = np.kron(Q1,Q2) @ iid @ Q3.T
+    #                 m2=m1
+    #             else:
+    #                 self.set_hyperparameters(hyperparameters[0])
+
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 self.set_hyperparameters(hyperparameters[1])
+    #                 x2 = x2.ravel()
+    #                 m2 = x2.size
+    #                 K2 = self.count(x2)
+    #                 Q2 = self.square_root_matrix(K2)
+    #                 self.set_hyperparameters(hyperparameters[2])
+    #                 x3 = x3.ravel()
+    #                 m3 = x3.size
+
+    #                 K3 = self.count(x3)
+    #                 Q3 = self.square_root_matrix(K3)
+
+    #                 iid = np.random.randn(m1*m2,m3)
+    #                 y = np.kron(Q1,Q2) @ iid @ Q3.T
+    #         else:
+    #             raise ValueError("In the 'simulate_2d' method, the hyperparameters must be a list of  size 1 or 3.")
+
+
+    #     else:
+    #         raise TypeError("In the 'simulate_2d' method, the hyperparameters must be a list.")
+            
+    #     return y.reshape(m1,m2,m3)
 
 
 
@@ -870,7 +943,7 @@ if __name__ == "__main__":
     import numpy as np
     import matplotlib.pyplot as plt
     from tqdm import tqdm
-    x = np.linspace(0,10,3000)
+    x = np.linspace(0,10,1000)
 
     # x1 = np.linspace(0,1,300)
 
@@ -912,8 +985,8 @@ if __name__ == "__main__":
     #print(rbf.label())
     #print(per)
     #np.random.seed(1)
-    ks =    RBF(2.5) + Polynomial(variance=.1)
-    d = [{"length_scale":np.random.rand(1),"variance" : np.random.rand(1)},{"length_scale":np.random.rand(1),"variance":np.random.rand(1)}]
+    #ks =    RBF(2.5)
+    #d = [{"length_scale":np.random.rand(1),"variance" : np.random.rand(1)},{"length_scale":np.random.rand(1),"variance":np.random.rand(1)}]
 
     kernel =  RBF(.3)
 
@@ -930,105 +1003,11 @@ if __name__ == "__main__":
     y0 = kernel.simulate(x)
 
     y = y0 + .2*np.random.randn(x.size)
-    train_size = int(x.size*.85)
-    (xtrain,ytrain) = x[:train_size],y[:train_size]
-    (xtest,ytest) = x[train_size:],y[train_size:]
 
-    mdl = GP()
-    #mdl.kernel_choice ="Matern52"
-    mdl.fit_bootstrap(xtrain,ytrain)
-
-    #yf,_ = mdl.predict(xtrain,ytrain)
-    yp,std_pred= mdl.predict(xtrain,ytrain,x)
-
-    #mdl.kernel_choice = "Polynomial"
-    #mdl.fit_bootstrap(xtrain,ytrain)
-    #print(mdl)
-    # list_prob = []
-    # list_prob = []
-    # hyparms_list = []
-    # std_list = []
-    # for i in range(100):
-    #     prob,df = mdl.expression(y,prob="df")
-    #     #list_prob.append((df.index[0],df.Probability[0]))
-    #     list_prob.append(df.index[0])
-    #     mdl._fit(x,y)
-    #     hyparms = mdl.get_hyperparameters()
-    #     hyparms_list.append(hyparms)
-    #     std_list.append(mdl.std_noise)
-
-    # from collections import Counter
-    # freq = Counter(list_prob)
-    # import pandas as pd
-    # print(freq)
-    # hyparms_df = pd.DataFrame(hyparms_list)
-    # plt.plot(hyparms_df.length_scale,label="ell")
-    # plt.plot(hyparms_df.variance,label="sig")
-
-    # plt.plot(std_list,label="std_noise")
-    # plt.legend()
-    # plt.show()
-
-    # mdl.std_noise = sum(std_list)/100
-    # #mdl.set_length_scale(hyparms_df.length_scale.values)
-    # dd = {"length_scale":hyparms_df.length_scale.values.mean(),"variance":hyparms_df.variance.values.mean()}
-    
-    # mdl.set_hyperparameters(dd)
-    # print(mdl)
-    # print(dd)
-    #yp,_=mdl.predict(xtrain,ytrain,x)
-
-    # #print(parms_mean)
-
-    # max_key = max(freq, key=freq.get)
-    # print("Le modèle est : ", max_key)
-
-    print(mdl.expression_bootstrap_predict(ytrain,probability=True))
-
-    
-
-    plt.plot(x,y,'k')
-    plt.plot(x,y0,'b')
-    plt.plot(x,yp,'r')
-    plt.fill_between(x,yp - 1.96 * std_pred, yp + 1.96 * std_pred,facecolor='red',edgecolor='blue',alpha=0.3, label='95% confidence interval')
-
+    plt.figure(figsize=(10,5))
+    plt.plot(x,y,'ok',label= "Data")
+    plt.plot(x,y0,'r',label = "True Gaussian Process")
+    plt.legend()
     plt.show()
-
-    #print(ks.label())
-    #print(ks.label_())
-
-    #print(ks)
-    #print(ks.get_hyperparameters())
-    #print(ks.recursive_kernel1())
-    #print(ks.label())
-
-    #
-    #isinstance(ks,Periodic)
-
-    #y = ks.simulate(x)
-    #plt.plot(x,y,'b')
-    #plt.show()
-    #print(ks.__dict__.values())
-    #print(ks.__dict__.values())
-
-    #print(list(map(lambda x: isinstance(x,KernelProduct),ks.__dict__.values())))
-
-    # ss = list(filter(lambda x: not isinstance(x,int),ks.__dict__.values()))
-    # ss1 = list(map(lambda x: isinstance(x,KernelSum),ss))
-
-    # print(ss1)
-
-
-    # ll = [{'length_scale': 0.6},{'length_scale': 1.3, 'period': 2},{'length_scale': 0.18}]
-    #print(ks.get_hyperparameters())
-    # ks.set_hyperparameters(ll)
-    # print(ks.get_hyperparameters())
-    #print(ks.label())
-
-    #print(ks.__dict__.values())
-    # print(ks._hyperparameter_number)
-
-    # c = RBF(length_scale=1) + Periodic() + Linear()
-    # print(c)
 
     

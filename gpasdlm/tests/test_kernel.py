@@ -14,7 +14,7 @@ kernels = [RBF(length_scale=1.0),
             Matern32(length_scale=1.0),
             Matern52(length_scale=1.0),
             #Exponential(length_scale=1.0),
-            Linear(length_scale=1.0),
+           # Linear(0),
             Periodic(length_scale=1.0,period=1.0),
 
 ]
@@ -62,7 +62,7 @@ x2 = np.random.RandomState(314).normal(0, 1, (6, 1))
 
     # xx = X
     # xy = Y
-lin = Linear(length_scale=1.)
+lin = Linear()
 
 def test_lin_count():
 
@@ -122,7 +122,7 @@ kernels = [RBF(length_scale=1.0),
             Matern32(length_scale=1.0),
             Matern52(length_scale=1.0),
             #Exponential(length_scale=1.0),
-            Linear(length_scale=1.0),
+            #Linear(),
             Periodic(length_scale=1.0,period=1.0),
 
 ]

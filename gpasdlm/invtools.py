@@ -32,7 +32,11 @@ def uppertriangular_2_symmetric(ut):
     ut[inds] = ut.T[inds]
 
 
-def fast_pd_inverse(m):
+def fast_pd_inverse(m: 'numpy array') -> 'numpy array': 
+    '''
+    This method calculates the inverse of a A real symmetric positive definite (n × n)-matrix
+    It is much faster than Numpy's "np.linalg.inv" method for example.
+    '''
     cholesky, info = lapack.dpotrf(m)
     if info != 0:
         raise ValueError('dpotrf failed on input {}'.format(m))
@@ -47,15 +51,15 @@ def fast_pd_inverse(m):
     return inv
 
 
-def inv_col_add_update(A, x, r):
+def inv_col_add_update(A: 'numpy array', x: 'numpy vector', r: float) -> 'numpy array':
     '''
     This method update the inverse of a matrix appending one column and one row.
     Assume we have a  kernel matrix (A) and we known its inverse. Now,
     for prediction reason in GPR model, we expand A with one coulmn and one row, A_augmented = [A x;x.T r]
     and wish to know the inverse of A_augmented. This function calculate the inverse of
     A_augmented using block matrix inverse formular,
-    hence much faster than directlx.T using for example
-    numpx.T.linalg.inv(A_augmented).
+    hence much faster than direct inverse using for example
+    Numpy function "np.linalg.inv(A_augmented)".
     '''
     x = x.reshape(-1, 1)
     #x.T = x.reshape(1, -1)
@@ -78,7 +82,11 @@ def inv_col_add_update(A, x, r):
     
     return M
 
-def inv_col_pop_update(A,c):
+def inv_col_pop_update(A: 'numpy array',c: int) -> 'numpy array':
+    '''
+    This method update the inverse of a matrix  when the i-th row and column are removed.
+
+    '''
     (n, m) = A.shape
     if n != m:
         raise('Matrix should be square.')

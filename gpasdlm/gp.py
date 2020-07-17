@@ -1,19 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# __author__ = "Hanany Tolba"
+# __copyright__ = "Copyright 2020, Guassian Process by Deep Learning Project"
+# __credits__ = ["Hanany Tolba"]
+# __license__ = "Apache License 2.0"
+# __version__ = "0.0.1"
+# __maintainer__ = "Hanany Tolba"
+# __email__ = "hananytolba@yahoo.com"
+# __status__ = "Production/stable"
 
 
 '''This module is for Gaussian Process Regression simulation fitting and prediction.'''
 
-# from __future__ import absolute_import
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
+import importlib
+import copy
+
 
 from gpasdlm.invtools import fast_pd_inverse as pdinv
 from gpasdlm.invtools import inv_col_add_update, inv_col_pop_update
-#from gpasdlm.periodicFit import periodic_fit 
 import gpasdlm.kernels as kernels
 from gpasdlm.kernels import *
-#from kernels import *
-#import kernels as Kernel
+
 import inspect
 import pandas as pd
 from collections import Counter
@@ -22,20 +30,20 @@ import glob
 import sys
 from numpy.linalg import inv
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error as mse
-from sklearn.metrics import r2_score
+#from sklearn.metrics import mean_squared_error as mse
+#from sklearn.metrics import r2_score
 import numpy as np
-from numpy import loadtxt
+#from numpy import loadtxt
 import tensorflow as tf
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 
 # tf mp
 from scipy.interpolate import interp1d
-from tensorflow import keras
+#from tensorflow import keras
 #
 
 
-from keras import backend as K
+from tensorflow.keras import backend as K
 from scipy import signal
 from tqdm import tqdm
 from scipy.signal import correlate
@@ -45,14 +53,6 @@ import colorama
 colorama.init()
 
 
-__author__ = "Hanany Tolba"
-__copyright__ = "Copyright 2020, Guassian Process by Deep Learning Project"
-__credits__ = ["Hanany Tolba"]
-__license__ = "Apache License 2.0"
-__version__ = "0.0.1"
-__maintainer__ = "Hanany Tolba"
-__email__ = "hanany100@gmail.com"
-__status__ = "Production/stable"
 
 
 # cprint('hello'.upper(), 'green')
@@ -88,19 +88,19 @@ class_names = ['Linear', 'Linear + Periodic', 'Periodic', 'Polynomial',
 path_predict_model = path + '/predict_gpr_model.hdf5'
 #model_expression = keras.models.load_model("/Users/tolba/Desktop/gpasdlm/keras_600/predict_gpr_model.hdf5")
 
-model_expression = keras.models.load_model(path_predict_model)
+model_expression = load_model(path_predict_model)
 probability_model = tf.keras.Sequential([model_expression, tf.keras.layers.Softmax()])
 
 path_periodic = os.path.join(path, "periodic_1d_300.hdf5")
 #print(path_periodic)
 K.clear_session()
-newModel = keras.models.load_model(path_periodic)
+newModel = load_model(path_periodic)
 
 
 path_periodic_noise = os.path.join(path, "iid_periodic_300.hdf5")
 #print(path_periodic)
 K.clear_session()
-model_periodic_noise = keras.models.load_model(path_periodic_noise)
+model_periodic_noise = load_model(path_periodic_noise)
 
 
 
@@ -140,152 +140,122 @@ class GaussianProcessRegressor():
     # '''
 
     """Gaussian process regression (GPR).
-    The implementation is based on the use of deep learning (tensorflow) as pretrained model  to fit
-    a GPR model to data.
+    This implementation use a tensorflow pretrained model  to estimate the Hyperparameters of 
+    a GPR model and then fitting the data with.
 
     The advantages of Gaussian processes are:
-        * The prediction interpolates the observations (at least for regular kernels).
+        * The prediction interpolates the observations.
         * The prediction is probabilistic (Gaussian) so that one can compute empirical confidence intervals and decide based on those if one should refit (online fitting, adaptive fitting) the prediction in some region of interest.
         * Versatile: different kernels can be specified. Common kernels are provided, but it is also possible to specify custom kernels.
 
     In addition to standard scikit-learn estimator API,
-    GaussianProcessRegressor:
-       * allows prediction without prior fitting (based on the GP prior)
-       * provides an additional method sample_y(X), which evaluates samples
-         drawn from the GPR (prior or posterior) at given inputs
-       * exposes a method log_marginal_likelihood(theta), which can be used
-         externally for other ways of selecting hyperparameters, e.g., via
-         Markov chain Monte Carlo.
-    Read more in the :ref:`User Guide <gaussian_process>`.
-    .. versionadded:: 0.18
-    Parameters
+       * The methods proposed here are much faster than standard scikit-learn estimator API.
+       * The prediction method here "predict" is very complete compared to scikit-learn estimator API with many options such as:
+         "sparse" and the automatic online update of prediction.
+
+   
+    Attributes::
     ----------
-    kernel : kernel instance, default=None
-        The kernel specifying the covariance function of the GP. If None is
-        passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
-        the kernel's hyperparameters are optimized during fitting.
-    alpha : float or array-like of shape (n_samples), default=1e-10
-        Value added to the diagonal of the kernel matrix during fitting.
-        Larger values correspond to increased noise level in the observations.
-        This can also prevent a potential numerical issue during fitting, by
-        ensuring that the calculated values form a positive definite matrix.
-        If an array is passed, it must have the same number of entries as the
-        data used for fitting and is used as datapoint-dependent noise level.
-        Note that this is equivalent to adding a WhiteKernel with c=alpha.
-        Allowing to specify the noise level directly as a parameter is mainly
-        for convenience and for consistency with Ridge.
-    optimizer : "fmin_l_bfgs_b" or callable, default="fmin_l_bfgs_b"
-        Can either be one of the internally supported optimizers for optimizing
-        the kernel's parameters, specified by a string, or an externally
-        defined optimizer passed as a callable. If a callable is passed, it
-        must have the signature::
-            def optimizer(obj_func, initial_theta, bounds):
-                # * 'obj_func' is the objective function to be minimized, which
-                #   takes the hyperparameters theta as parameter and an
-                #   optional flag eval_gradient, which determines if the
-                #   gradient is returned additionally to the function value
-                # * 'initial_theta': the initial value for theta, which can be
-                #   used by local optimizers
-                # * 'bounds': the bounds on the values of theta
-                ....
-                # Returned are the best found hyperparameters theta and
-                # the corresponding value of the target function.
-                return theta_opt, func_min
-        Per default, the 'L-BGFS-B' algorithm from scipy.optimize.minimize
-        is used. If None is passed, the kernel's parameters are kept fixed.
-        Available internal optimizers are::
-            'fmin_l_bfgs_b'
-    n_restarts_optimizer : int, default=0
-        The number of restarts of the optimizer for finding the kernel's
-        parameters which maximize the log-marginal likelihood. The first run
-        of the optimizer is performed from the kernel's initial parameters,
-        the remaining ones (if any) from thetas sampled log-uniform randomly
-        from the space of allowed theta-values. If greater than 0, all bounds
-        must be finite. Note that n_restarts_optimizer == 0 implies that one
-        run is performed.
-    normalize_y : boolean, optional (default: False)
-        Whether the target values y are normalized, the mean and variance of
-        the target values are set equal to 0 and 1 respectively. This is
-        recommended for cases where zero-mean, unit-variance priors are used.
-        Note that, in this implementation, the normalisation is reversed
-        before the GP predictions are reported.
-        .. versionchanged:: 0.23
-    copy_X_train : bool, default=True
-        If True, a persistent copy of the training data is stored in the
-        object. Otherwise, just a reference to the training data is stored,
-        which might cause predictions to change if the data is modified
-        externally.
-    random_state : int or RandomState, default=None
-        Determines random number generation used to initialize the centers.
-        Pass an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
-    Attributes
-    ----------
-    X_train_ : array-like of shape (n_samples, n_features) or list of object
+    xtrain : array-like of shape (n_samples, 1) or (n_samples, ) list of object
         Feature vectors or other representations of training data (also
         required for prediction).
-    y_train_ : array-like of shape (n_samples,) or (n_samples, n_targets)
+    ytrain : array-like of shape (n_samples, 1) or (n_samples, ) or list of object
         Target values in training data (also required for prediction)
-    kernel_ : kernel instance
-        The kernel used for prediction. The structure of the kernel is the
-        same as the one passed as parameter but with optimized hyperparameters
-    L_ : array-like of shape (n_samples, n_samples)
-        Lower-triangular Cholesky decomposition of the kernel in ``X_train_``
-    alpha_ : array-like of shape (n_samples,)
-        Dual coefficients of training data points in kernel space
-    log_marginal_likelihood_value_ : float
-        The log-marginal-likelihood of ``self.kernel_.theta``
+    kernel : 
+        Kernel instance, the default is RBF instance.
+    sigma_n : 
+        Noise standard deviation (std) of the gaussian white noise, default is 0.01.
+    model :
+        The pretrained tensorflow model, which corresponds to the choice of the kernel function, by default it is that of RBF.
+
     Examples::
     --------
-            * from gpasdlm.gaussian_process import GaussianProcessRegressor as GPR
-            * from gpasdlm.kernels import RBF, Periodic
-            * import matplotlib.pyplot as plt
-            * import numpy as np
+            >>> from gpasdlm.gaussian_process import GaussianProcessRegressor as GPR
+            >>> from gpasdlm.kernels import RBF, Periodic
+            >>> import matplotlib.pyplot as plt
+            >>> import numpy as np
+            >>> import time
 
-            * x = np.linspace(0,15,2000)
-            * y = RBF(length_scale = .5).simulate(x)
-            *  y_noisy = y + .1*np.random.randn(x.size)
+            >>> x = np.linspace(0,8,1000)
+            >>> y = np.sin(x)*np.sin(2*x)+ np.cos(5*x)
+            >>> yn = y  + .2*np.random.randn(x.size)
+
+            >>> plt.figure(figsize=(10,6))
+            >>> plt.plot(x,yn,'ok',label="Data")
+            >>> plt.plot(x,y,'b',lw=2,label='True gaussian process')
+            >>> plt.legend()
+            >>> plt.show()
+
+
+            >>> #Defining a Gaussian process model
+            >>> model = GPR(x,yn)
+            >>> start = time.time()
+
+            >>> #Fit a Gaussian process model
+            >>> model.fit()
+            >>> xs = np.linspace(8,12,200)
+
+            >>> #Prediction::
+            >>> yfit,_ = model.predict() # same as  yfit,_ = model.predict(x)
+            >>> ypred,_ = model.predict(xs)
+
+            >>> #Get time taken to run fit and predict
+            >>> elapsed_time_lc=(time.time()-start)
+            >>> print(f"The time taken to run fit and predict methods is {elapsed_time_lc} seconds")
+
+            >>> plt.figure(figsize=(10,6))
+            >>> plt.plot(x,yn,'ok',label="Data")
+            >>> plt.plot(x,y,'b',label='True gaussian process')
+            >>> plt.plot(x,yfit,'r--',lw=2,label="Training")
+            >>> plt.plot(xs,ypred,'r',label='Prediction')
+            >>> plt.legend()
+            >>> plt.show()
+            >>> print(model)
+
+
+
+
     """
 
-    path_list = list(filter(lambda x: x.endswith('site-packages') ,sys.path))
-    path = path_list[0]
-    path = path + '/gpasdlm/keras_600'
-    #path = path + '/keras_600'
+#     path_list = list(filter(lambda x: x.endswith('site-packages') ,sys.path))
+#     path = path_list[0]
+#     path = path + '/gpasdlm/keras_600'
+#     #path = path + '/keras_600'
 
-    file_list = glob.glob(path + "**/*.hdf5", recursive=True)
-    file_name = [f for f in os.listdir(path) if not f.startswith('.')]
+#     file_list = glob.glob(path + "**/*.hdf5", recursive=True)
+#     file_name = [f for f in os.listdir(path) if not f.startswith('.')]
 
-    Kernels = inspect.getmembers(kernels, inspect.isclass)
-    Kernels_class_instances = [m[1]() for m in Kernels]
-    Kernels_class_names = [m[0].lower() for m in Kernels]
-
-
-    class_names = ['Linear', 'Linear + Periodic', 'Periodic', 'Polynomial',
-       'Polynomial + Periodic', 'Polynomial + Periodic + Stationary',
-       'Polynomial + Stationary', 'Stationary', 'Stationary + Linear + Periodic',
-       'Stationary + Periodic']
+#     Kernels = inspect.getmembers(kernels, inspect.isclass)
+#     Kernels_class_instances = [m[1]() for m in Kernels]
+#     Kernels_class_names = [m[0].lower() for m in Kernels]
 
 
-    path_predict_model = path + '/predict_gpr_model.hdf5'
-#model_expression = keras.models.load_model("/Users/tolba/Desktop/gpasdlm/keras_600/predict_gpr_model.hdf5")
-
-    model_expression = keras.models.load_model(path_predict_model)
-    probability_model = tf.keras.Sequential([model_expression, tf.keras.layers.Softmax()])
-
+#     class_names = ['Linear', 'Linear + Periodic', 'Periodic', 'Polynomial',
+#        'Polynomial + Periodic', 'Polynomial + Periodic + Stationary',
+#        'Polynomial + Stationary', 'Stationary', 'Stationary + Linear + Periodic',
+#        'Stationary + Periodic']
 
 
-    def __init__(self,xtrain,ytrain, kernel=None, model=None, sigma_n=.01):
+#     path_predict_model = path + '/predict_gpr_model.hdf5'
+# #model_expression = keras.models.load_model("/Users/tolba/Desktop/gpasdlm/keras_600/predict_gpr_model.hdf5")
+
+#     model_expression = keras.models.load_model(path_predict_model)
+#     probability_model = tf.keras.Sequential([model_expression, tf.keras.layers.Softmax()])
+
+
+
+    def __init__(self,xtrain,ytrain, kernel=RBF(), model=None, sigma_n=.01):
         '''
         Constructor of the Gaussian process regression class:<
-        It has three attributes:
-        - _kernel: an instance of a Kernel class (RBF,Matern32,...)
-        - _model: is a pre-trained keras-tensorflow model
+        It has five attributes:
+        - _kernel: an instance of a kernels class (RBF,Matern32,...)
+        - _model: is a pretrained tensorflow model
         - _sigma_n: is the standard deviation of the gaussian white noise.
         '''
         self._xtrain = xtrain
         self._ytrain = ytrain
 
-        self._kernel = RBF()
+        self._kernel = kernel
         path = file_list[file_name.index('rbf_1d.hdf5')]
         K.clear_session()
         best_model = load_model(path)
@@ -305,19 +275,14 @@ class GaussianProcessRegressor():
 
     @property
     def kernel_choice(self):
+        '''
+        kernel_choice is for choose the kernel function.
+        '''
         return self._kernel
 
     @property
     def std_noise(self):
         return self._sigma_n
-
-    # @property
-    # def get_model(self):
-    #     return self._model
-
-    # @get_model.setter
-    # def get_model(self):
-    #     return self._model
 
     @std_noise.setter
     def std_noise(self, sigma_n):
@@ -348,13 +313,12 @@ class GaussianProcessRegressor():
         '''
         This method allows to choose the type of the covariance or kernel function. For the moment only the functions:
                  "Linear",
-                 "Periodic."
+                 "Periodic",
                  "RBF",
                  "Matern12",
                  "Matern32",
-                 "Matern52."
-                 "Exponential."
-                 "Cosine,
+                 "Matern52",
+                 "Polynomial",
         are available. Other kernels functions  and composition of kernel, will be added in the next version of this package.
         '''
 
@@ -369,10 +333,11 @@ class GaussianProcessRegressor():
             str_kernel = kernel + '_1d.hdf5'
             path_model = file_list[file_name.index(str_kernel)]
             K.clear_session()  # pour accelerer keras model load
-            try:
-                best_model = load_model(path_model)
-            except:
-                best_model = keras.models.load_model(path_model)
+            best_model = load_model(path_model)
+            #try:
+                #best_model = load_model(path_model)
+            #except:
+            #    best_model = keras.models.load_model(path_model)
 
             self._kernel = Kernels_class_instances[location]
             self._kernel.set_length_scale(1)
@@ -420,19 +385,29 @@ class GaussianProcessRegressor():
     def check_x(x):
 
         if isinstance(x, np.ndarray):
-            raise ValueError(
-                "The input (space or time)  must be a 'numpy' vector (1d).")
+            
             if x.ndim != 1:
                 raise ValueError(
                     "The input (space or time)  must be a 'numpy' vector type.")
+        
+        elif isinstance(x, list):
+            x = np.array(x)
+        else:
+            raise ValueError(
+                "The input (space or time)  must be a 'numpy' vector (1d) or list.")
+
         return
 
     @staticmethod
     def x_type(x):  # check_x(x):
+        x = np.array(x)
         return x.ravel()
 
     @staticmethod
     def _sorted(x,y,index = False):
+        x = np.array(x)
+        y = np.array(y)
+
         ind = np.argsort(x.ravel(), axis=0)
         if index:
             return x[ind], y[ind], ind
@@ -469,10 +444,10 @@ class GaussianProcessRegressor():
         
 
         #plt.plot(x,y)
-        plt.plot(x_interp,ynew)
+        #plt.plot(x_interp,ynew)
 
         #plt.plot(x_interp,ynew)
-        plt.show()
+        #plt.show()
 
         prob_predictions = GaussianProcessRegressor.probability_model.predict(ynew.reshape(1,300))
         prob_predictions = prob_predictions.ravel()
@@ -558,8 +533,21 @@ class GaussianProcessRegressor():
         x,y = self._xtrain, self._ytrain
 
         hyp = self.p_fit(x,y)
-        quantile_size = np.linspace(.01,1,100)
+        if int(.001*x.size >10):
+            quantile_size = np.linspace(.001,1,200)
+
+
+        elif int(.01*x.size >10):
+            quantile_size = np.linspace(.01,1,200)
+        elif int(.1*x.size >10):
+            quantile_size = np.linspace(.1,1,200)
+
+        else:
+            quantile_size = np.linspace(.2,1,100)
+
+
         quantile_size = x.size * quantile_size
+
         ytest_list = list(map(lambda s: y[:int(s)], quantile_size))
         period_list = []
         for yt in ytest_list:
@@ -985,6 +973,7 @@ class GaussianProcessRegressor():
                 Index = np.sort(Index.ravel(), axis=None)
 
                 x_train, y_train = x_train[Index], y_train[Index] 
+                self._xtrain, self._ytrain = x_train, y_train
             except ValueError as e:
                 print(f"The data size is very small '{y_train.size}'. The sparse option requires the data size to be larger than 1000.")
 
@@ -1009,6 +998,14 @@ class GaussianProcessRegressor():
             # res = res.tolist()
             # std_pred = std_pred.tolist()
             y_pred, std_pred = np.array(res), np.array(std_pred)
+
+        elif self._kernel.__class__.__name__ in ["Linear","Polynomial"]:
+
+            (res, std_pred) = self.mean_predict(xt)
+            y_pred, std_pred = np.array(res), np.array(std_pred)
+
+
+
 
         else:
 
@@ -1087,6 +1084,42 @@ class GaussianProcessRegressor():
 
 
         return (y_pred.ravel(), std_pred.ravel())
+
+
+
+    # def fit_expr(self,model_expr):
+    #     #model_expr = "Linear  +  Periodic +    RBF"
+    #     x,yn = self._xtrain,self._ytrain
+    #     model_expr = model_expr.replace(" ", "")
+    #     cmp = model_expr.split("+")
+    #     #print(cmp)
+    #     module_ = importlib.import_module("gpasdlm.kernels")
+    #     gprs = []
+    #     data = yn
+    #     for ker_name in cmp:
+    #         class_ = getattr(module_, ker_name)
+    #         instance = class_()
+    #         #print(instance)
+
+    #         #gpr = GPR(x,data)
+    #         self._ytrain = data
+    #         self._kernel = instance
+    #         self.fit()
+    #         #print(gpr)
+    #         newobj = copy.copy(self)
+    #         gprs.append(newobj)
+
+    #         yfit,_ = self.predict()
+    #         data =  data - yfit
+    #         #gpr._ytrain = data 
+
+    #     return gprs
+
+    # #def predict_expr(self,xs,gprs):
+    # def predict_expr(self,gprs, xt=None, yt=None, horizon=None,option=None, sparse = None, sparse_size=None):
+    #     list_pred_pstd =[self.predict(xt) for mdl in  gprs]
+    #     yp,std = np.array(list_pred_pstd).sum(axis=0)
+    #     return yp,std
 
 
 

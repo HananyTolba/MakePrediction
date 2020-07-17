@@ -16,8 +16,11 @@ from setuptools import setup, find_packages
 
 # import pkg_resources  # part of setuptools
 #version = pkg_resources.require("gpasdlm")[0].version
-version = "0.0.1"
+#version = "0.0.1"
 #import gprbytf
+
+with open('gpasdlm/version.py') as f:
+    exec(f.read())
 
 setup(
     name='gpasdlm',         # How you named your package folder (MyLib)
@@ -26,7 +29,7 @@ setup(
     # package_dir='gprbytf',   # Chose the same as "name"
     # version = gprbytf.__version__, #"0.0.1",      # Start with a small
     # number and increase it with every change you make
-    version=version,      # Start with a small number and increase it with every change you make
+    version=__version__,      # Start with a small number and increase it with every change you make
 
     # Chose a license from here:
     # https://help.github.com/articles/licensing-a-repository
@@ -51,10 +54,10 @@ setup(
         "tqdm",
         "termcolor",
         "scipy",
-        "keras",
+        #"keras",
         "scikit_learn",
         "tensorflow",
-        "matplotlib",
+        #"matplotlib",
         "pandas",
         # only for the demo
     ],
