@@ -1,8 +1,8 @@
-recursive-include gpasdlm/LICENSE 
-recursive-include gpasdlm/Examples
-recursive-include gpasdlm/ *.txt
-recursive-include gpasdlm/tests *.py
-recursive-include gpasdlm/gpTFModels *.hdf5
+recursive-include gpasdnn/LICENSE 
+recursive-include gpasdnn/Examples
+recursive-include gpasdnn/ *.txt
+recursive-include gpasdnn/tests *.py
+recursive-include gpasdnn/gpTFModels *.hdf5
 
 
 

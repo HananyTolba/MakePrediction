@@ -24,16 +24,16 @@ Fast and easy gaussian process regression using deep learning with tensorflow
 from setuptools import setup, find_packages
 
 # import pkg_resources  # part of setuptools
-#version = pkg_resources.require("gpasdlm")[0].version
+#version = pkg_resources.require("gpasdnn")[0].version
 #version = "0.0.1"
 #import gprbytf
 
-with open('gpasdlm/version.py') as f:
+with open('gpasdnn/version.py') as f:
     exec(f.read())
 
 setup(
-    name='gpasdlm',         # How you named your package folder (MyLib)
-    packages=['gpasdlm'],
+    name='gpasdnn',         # How you named your package folder (MyLib)
+    packages=['gpasdnn'],
     # packages=find_packages(where='src'),
     # package_dir='gprbytf',   # Chose the same as "name"
     # version = gprbytf.__version__, #"0.0.1",      # Start with a small
@@ -43,7 +43,7 @@ setup(
     # Chose a license from here:
     # https://help.github.com/articles/licensing-a-repository
     license="Apache License 2.0",
-    description="Fast and easy gaussian process regression using deep learning with tensorflow",
+    description="Fast and easy gaussian process regression using deep  neural networks’s with tensorflow",
     author=__author__, 
     long_description = __doc__,                 # Type in your name
     author_email=__email__,
@@ -70,7 +70,7 @@ setup(
         "pandas",
         # only for the demo
     ],
-    #package_data={'gpasdlm': ['keras_600/*']},
+    #package_data={'gpasdnn': ['keras_600/*']},
     python_requires=">=3.6, <3.8",
     include_package_data=True,
 
