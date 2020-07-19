@@ -202,7 +202,7 @@ class Kernel:
         return kernel_list
             
     def label(self) -> str:
-        print("Label genèral")
+        #print("Label genèral")
         names = self.recursive_str_list()
         if isinstance(names, list):
         	return ' + '.join(names)
@@ -867,7 +867,7 @@ class KernelSum(Kernel):
             self._kernel_2.count(data_1, data_2)
 
     def label(self):
-        print("label sum")
+        #print("label sum")
         if self.__class__.__name__ == "KernelSum":
             r = self.recursive_str_list()
             #r = list(map(lambda x: x.__class__.__name__,r))
@@ -941,7 +941,7 @@ class KernelProduct(Kernel):
 
 
     def label(self):
-        print("label product")
+       # print("label product")
         if self.__class__.__name__ == "KernelProduct":
             r = self.recursive_kernel()
             r = list(map(lambda x: x.__class__.__name__,r))
