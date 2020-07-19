@@ -1040,8 +1040,8 @@ class GaussianProcessRegressor():
 
 
 if __name__ == "__main__":
-    from gpbytf.kernels import *
-    from gpbytf.gaussianprocess import GaussianProcessRegressor as GP
+    from gpasdnn.kernels import *
+    from gpasdnn.gp import GaussianProcessRegressor as GP
     import numpy as np
     import matplotlib.pyplot as plt
     from tqdm import tqdm
