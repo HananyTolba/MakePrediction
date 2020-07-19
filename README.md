@@ -8,12 +8,7 @@ To install gpasdnn:
     1) pip install . 
     This also installs required dependencies including TensorFlow, and sets everything up. Or with:
     2) pip install gpasdnn 
-
-
-
-
-
-
+    
     Gaussian process regression (GPR):
     =====================================
     This package use a tensorflow pretrained model to estimate the Hyperparameters of 
