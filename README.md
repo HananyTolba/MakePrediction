@@ -18,9 +18,8 @@ It was originally created by [Hanany Tolba].
 
 ### Latest release from PyPI
 
-```bash
 pip install gpasdnn
-```
+
 
 
 ### Latest source from GitHub
@@ -28,7 +27,5 @@ pip install gpasdnn
 *Be aware that the `master` branch may change regularly, and new commits may break your code.*
 
 [GPasDNN GitHub repository](https://github.com/HananyTolba/Gaussian-process-as-deep-neural-network.git), run
-```bash
 pip install  .
-```
 

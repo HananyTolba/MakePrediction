@@ -1,6 +1,6 @@
 Metadata-Version: 1.2
 Name: gpasdnn
-Version: 0.0.1
+Version: 0.0.2
 Summary: Fast and easy gaussian process regression using deep  neural networks’s with tensorflow
 Home-page: https://github.com/hananytolba
 Author: Hanany Tolba
