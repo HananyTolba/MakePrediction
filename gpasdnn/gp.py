@@ -177,7 +177,7 @@ class GaussianProcessRegressor():
 
     Examples:
     ===============
-            >>> from gpasdnn.gaussian_process import GaussianProcessRegressor as GPR
+            >>> from gpasdnn.gp import GaussianProcessRegressor as GPR
             >>> from gpasdnn.kernels import RBF, Periodic
             >>> import matplotlib.pyplot as plt
             >>> import numpy as np

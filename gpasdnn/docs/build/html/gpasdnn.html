@@ -1,0 +1,600 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>gpasdnn package &mdash; gpasdnn  documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="gpasdnn  documentation" href="index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="index.html" class="fa fa-home"> gpasdnn</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <!-- Local TOC -->
+            <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">gpasdnn package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-gpasdnn.gp">gpasdnn.gp module</a></li>
+<li><a class="reference internal" href="#module-gpasdnn.invtools">gpasdnn.invtools module</a></li>
+<li><a class="reference internal" href="#module-gpasdnn.kernels">gpasdnn.kernels module</a></li>
+<li><a class="reference internal" href="#module-gpasdnn">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">gpasdnn</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>gpasdnn package</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/gpasdnn.rst.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="gpasdnn-package">
+<h1>gpasdnn package<a class="headerlink" href="#gpasdnn-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-gpasdnn.gp">
+<span id="gpasdnn-gp-module"></span><h2>gpasdnn.gp module<a class="headerlink" href="#module-gpasdnn.gp" title="Permalink to this headline">¶</a></h2>
+<p>This module is for Gaussian Process Regression simulation fitting and prediction.</p>
+<dl class="class">
+<dt id="gpasdnn.gp.GaussianProcessRegressor">
+<em class="property">class </em><code class="descclassname">gpasdnn.gp.</code><code class="descname">GaussianProcessRegressor</code><span class="sig-paren">(</span><em>xtrain</em>, <em>ytrain</em>, <em>kernel=Instance of class 'RBF'</em>, <em>model=None</em>, <em>sigma_n=0.01</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This implementation use a tensorflow pretrained model  to estimate the Hyperparameters of 
+a GPR model and then fitting the data with.</p>
+<dl class="docutils">
+<dt>The advantages of Gaussian processes are:</dt>
+<dd><ul class="first last simple">
+<li>The prediction interpolates the observations.</li>
+<li>The prediction is probabilistic (Gaussian) so that one can compute empirical confidence intervals and decide based on those if one should refit (online fitting, adaptive fitting) the prediction in some region of interest.</li>
+<li>Versatile: different kernels can be specified. Common kernels are provided, but it is also possible to specify custom kernels.</li>
+</ul>
+</dd>
+<dt>In addition to standard scikit-learn estimator API,</dt>
+<dd><ul class="first last simple">
+<li>The methods proposed here are much faster than standard scikit-learn estimator API.</li>
+<li>The prediction method here “predict” is very complete compared to scikit-learn estimator API with many options such as:
+“sparse” and the automatic online update of prediction.</li>
+</ul>
+</dd>
+</dl>
+<dl class="docutils">
+<dt>xtrain <span class="classifier-delimiter">:</span> <span class="classifier">array-like of shape (n_samples, 1) or (n_samples, ) list of object</span></dt>
+<dd>Feature vectors or other representations of training data (also
+required for prediction).</dd>
+<dt>ytrain <span class="classifier-delimiter">:</span> <span class="classifier">array-like of shape (n_samples, 1) or (n_samples, ) or list of object</span></dt>
+<dd>Target values in training data (also required for prediction)</dd>
+<dt>kernel <span class="classifier-delimiter">:</span> <span class="classifier"></span></dt>
+<dd>Kernel instance, the default is RBF instance.</dd>
+<dt>sigma_n <span class="classifier-delimiter">:</span> <span class="classifier"></span></dt>
+<dd>Noise standard deviation (std) of the gaussian white noise, default is 0.01.</dd>
+<dt>model :</dt>
+<dd>The pretrained tensorflow model, which corresponds to the choice of the kernel function, by default it is that of RBF.</dd>
+</dl>
+<p>The class ‘GaussianProcessRegressor’, is a model of Gaussian process regression which has several  methods. The most important of its methods are: 
+<strong>fit</strong>, <strong>predict</strong>, <strong>simulate</strong> and <strong>kernel_choice</strong>.
+The method <strong>fit</strong> :  estimates the hyperparameters of the kernel function of the model.
+The method <strong>predict</strong> : allows prediction with the GaussianProcessRegressor model.
+The method <strong>simulate</strong> : allows the simulation of the realizations of GaussianProcess according to the various kernels.
+The method <strong>kernel_choice</strong> : allows to choose a kernel as apriori. By default it is the RBF function which is considered.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">gpasdnn.gaussian_process</span> <span class="kn">import</span> <span class="n">GaussianProcessRegressor</span> <span class="k">as</span> <span class="n">GPR</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">gpasdnn.kernels</span> <span class="kn">import</span> <span class="n">RBF</span><span class="p">,</span> <span class="n">Periodic</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">time</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">1000</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">)</span><span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mi">5</span><span class="o">*</span><span class="n">x</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">yn</span> <span class="o">=</span> <span class="n">y</span>  <span class="o">+</span> <span class="o">.</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">yn</span><span class="p">,</span><span class="s1">&#39;ok&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Data&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="s1">&#39;b&#39;</span><span class="p">,</span><span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;True gaussian process&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Defining a Gaussian process model</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">GPR</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">yn</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Fit a Gaussian process model</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">12</span><span class="p">,</span><span class="mi">200</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Prediction::</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">yfit</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">()</span> <span class="c1"># same as  yfit,_ = model.predict(x)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ypred</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#Get time taken to run fit and predict</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">elapsed_time_lc</span><span class="o">=</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">start</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The time taken to run fit and predict methods is </span><span class="si">{</span><span class="n">elapsed_time_lc</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">yn</span><span class="p">,</span><span class="s1">&#39;ok&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Data&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="s1">&#39;b&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;True gaussian process&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">yfit</span><span class="p">,</span><span class="s1">&#39;r--&#39;</span><span class="p">,</span><span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Training&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span><span class="n">ypred</span><span class="p">,</span><span class="s1">&#39;r&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;Prediction&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="staticmethod">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.check_x">
+<em class="property">static </em><code class="descname">check_x</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.check_x" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>p0=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method allows the estimation of the hyperparameters of the GPR model.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.get_hyperparameters">
+<code class="descname">get_hyperparameters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.get_hyperparameters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.hyperparameters">
+<code class="descname">hyperparameters</code><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.hyperparameters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.kernel_choice">
+<code class="descname">kernel_choice</code><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.kernel_choice" title="Permalink to this definition">¶</a></dt>
+<dd><p>kernel_choice is for choose the kernel function.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.line_transform">
+<code class="descname">line_transform</code><span class="sig-paren">(</span><em>Y</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.line_transform" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>This function transforms any line or segment [a, b] to segment [-3, 3] and</dt>
+<dd>then returns the parameters of the associated model.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.mean_predict">
+<code class="descname">mean_predict</code><span class="sig-paren">(</span><em>xtest</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.mean_predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method allows long term prediction over an xtest position vector (time or space) via GPR model.
+It will be called when the “predict” method is used. It doesn’t need to have updates of new data at regular horizon i.e. (ytest not necessary).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.p_fit">
+<code class="descname">p_fit</code><span class="sig-paren">(</span><em>x</em>, <em>y</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.p_fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.period_est">
+<code class="descname">period_est</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.period_est" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.predict">
+<code class="descname">predict</code><span class="sig-paren">(</span><em>xt=None</em>, <em>yt=None</em>, <em>horizon=None</em>, <em>option=None</em>, <em>sparse=None</em>, <em>sparse_size=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>As we know the GPR model can do prediction and interpolation. This method calculates prediction (extrapolation) as well as interpolation. Are used:
+Case 1 :
+self.predict(x_train, y_train, xt) gives us the prediction of the data on the xt location vector.</p>
+<p>Case 2: According to the prediction horizon horizon =1,2,3,… in this case we want to calculate
+the predictions of the GPR model on the vector of xt leases, with the difference that we will make regular updates (autoregressive) each time a future data yt is observed.   In this case the syntax is :</p>
+<p>self.predict(x_train, y_train, xt, yt, horizon=h)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.predict_by_block">
+<code class="descname">predict_by_block</code><span class="sig-paren">(</span><em>xt</em>, <em>yt</em>, <em>fast=True</em>, <em>option=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.predict_by_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method uses the “invupdate” function for the fast calculation of the GPR prediction.
+It will be called in the “predict” method if “yt” is no None.
+By default “fast” equals True. If “fast” equals False, “invupdate”, will not be used and the classic
+numpy matrix inverse function will be used.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.predict_periodic">
+<code class="descname">predict_periodic</code><span class="sig-paren">(</span><em>xtest</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.predict_periodic" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method allows prediction via a periodic kernel model.
+it will be called when the “predict” method is used.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.set_hyperparameters">
+<code class="descname">set_hyperparameters</code><span class="sig-paren">(</span><em>dic</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.set_hyperparameters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.std_noise">
+<code class="descname">std_noise</code><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.std_noise" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="gpasdnn.gp.GaussianProcessRegressor.x_type">
+<em class="property">static </em><code class="descname">x_type</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.GaussianProcessRegressor.x_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gpasdnn.gp.RBF">
+<em class="property">class </em><code class="descclassname">gpasdnn.gp.</code><code class="descname">RBF</code><span class="sig-paren">(</span><em>length_scale=1.0</em>, <em>hyperparameter_number=2</em>, <em>variance=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.RBF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpasdnn.kernels.Kernel</span></code></p>
+<dl class="method">
+<dt id="gpasdnn.gp.RBF.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>x</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.RBF.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Squared Exponential covariance function or RBF with isotropic distance measure.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gpasdnn.gp.Matern52">
+<em class="property">class </em><code class="descclassname">gpasdnn.gp.</code><code class="descname">Matern52</code><span class="sig-paren">(</span><em>length_scale=1</em>, <em>variance=1</em>, <em>hyperparameter_number=2</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.Matern52" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpasdnn.kernels.Kernel</span></code></p>
+<dl class="method">
+<dt id="gpasdnn.gp.Matern52.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>x</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.Matern52.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Matern covariance function with nu = 5/2 and isotropic distance measure.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gpasdnn.gp.Matern32">
+<em class="property">class </em><code class="descclassname">gpasdnn.gp.</code><code class="descname">Matern32</code><span class="sig-paren">(</span><em>length_scale=1</em>, <em>variance=1</em>, <em>hyperparameter_number=2</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.Matern32" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpasdnn.kernels.Kernel</span></code></p>
+<dl class="method">
+<dt id="gpasdnn.gp.Matern32.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>x</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.Matern32.count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gpasdnn.gp.Matern12">
+<em class="property">class </em><code class="descclassname">gpasdnn.gp.</code><code class="descname">Matern12</code><span class="sig-paren">(</span><em>length_scale=1</em>, <em>variance=1</em>, <em>hyperparameter_number=2</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.Matern12" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpasdnn.kernels.Kernel</span></code></p>
+<dl class="method">
+<dt id="gpasdnn.gp.Matern12.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>x</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.Matern12.count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gpasdnn.gp.Periodic">
+<em class="property">class </em><code class="descclassname">gpasdnn.gp.</code><code class="descname">Periodic</code><span class="sig-paren">(</span><em>length_scale=1</em>, <em>period=1</em>, <em>hyperparameter_number=3</em>, <em>variance=1</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.Periodic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpasdnn.kernels.Kernel</span></code></p>
+<dl class="method">
+<dt id="gpasdnn.gp.Periodic.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>x</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.Periodic.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stationary covariance function for a sinusoid.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gpasdnn.gp.Periodic.get_period">
+<code class="descname">get_period</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.Periodic.get_period" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gpasdnn.gp.Periodic.set_period">
+<code class="descname">set_period</code><span class="sig-paren">(</span><em>period</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.Periodic.set_period" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gpasdnn.gp.Polynomial">
+<em class="property">class </em><code class="descclassname">gpasdnn.gp.</code><code class="descname">Polynomial</code><span class="sig-paren">(</span><em>length_scale=0</em>, <em>hyperparameter_number=2</em>, <em>variance=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.Polynomial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpasdnn.kernels.Kernel</span></code></p>
+<dl class="method">
+<dt id="gpasdnn.gp.Polynomial.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>x</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.gp.Polynomial.count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt>
+<em class="property">class </em><code class="descclassname">gpasdnn.gp.</code><code class="descname">Periodic</code><span class="sig-paren">(</span><em>length_scale=1</em>, <em>period=1</em>, <em>hyperparameter_number=3</em>, <em>variance=1</em><span class="sig-paren">)</span></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpasdnn.kernels.Kernel</span></code></p>
+<dl class="method">
+<dt>
+<code class="descname">count</code><span class="sig-paren">(</span><em>x</em>, <em>y=None</em><span class="sig-paren">)</span></dt>
+<dd><p>Stationary covariance function for a sinusoid.</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">get_period</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">set_period</code><span class="sig-paren">(</span><em>period</em><span class="sig-paren">)</span></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<img alt="_images/Figure_1.png" src="_images/Figure_1.png" />
+</div>
+<div class="section" id="module-gpasdnn.invtools">
+<span id="gpasdnn-invtools-module"></span><h2>gpasdnn.invtools module<a class="headerlink" href="#module-gpasdnn.invtools" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="gpasdnn.invtools.fast_pd_inverse">
+<code class="descclassname">gpasdnn.invtools.</code><code class="descname">fast_pd_inverse</code><span class="sig-paren">(</span><em>m: numpy array</em><span class="sig-paren">)</span> &#x2192; numpy array<a class="headerlink" href="#gpasdnn.invtools.fast_pd_inverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method calculates the inverse of a A real symmetric positive definite (n × n)-matrix
+It is much faster than Numpy’s “np.linalg.inv” method for example.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gpasdnn.invtools.inv_col_add_update">
+<code class="descclassname">gpasdnn.invtools.</code><code class="descname">inv_col_add_update</code><span class="sig-paren">(</span><em>A: numpy array</em>, <em>x: numpy vector</em>, <em>r: float</em><span class="sig-paren">)</span> &#x2192; numpy array<a class="headerlink" href="#gpasdnn.invtools.inv_col_add_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method update the inverse of a matrix appending one column and one row.
+Assume we have a  kernel matrix (A) and we known its inverse. Now,
+for prediction reason in GPR model, we expand A with one coulmn and one row, A_augmented = [A x;x.T r]
+and wish to know the inverse of A_augmented. This function calculate the inverse of
+A_augmented using block matrix inverse formular,
+hence much faster than direct inverse using for example
+Numpy function “np.linalg.inv(A_augmented)”.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gpasdnn.invtools.inv_col_pop_update">
+<code class="descclassname">gpasdnn.invtools.</code><code class="descname">inv_col_pop_update</code><span class="sig-paren">(</span><em>A: numpy array</em>, <em>c: int</em><span class="sig-paren">)</span> &#x2192; numpy array<a class="headerlink" href="#gpasdnn.invtools.inv_col_pop_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method update the inverse of a matrix  when the i-th row and column are removed.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gpasdnn.invtools.uppertriangular_2_symmetric">
+<code class="descclassname">gpasdnn.invtools.</code><code class="descname">uppertriangular_2_symmetric</code><span class="sig-paren">(</span><em>ut</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.invtools.uppertriangular_2_symmetric" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-gpasdnn.kernels">
+<span id="gpasdnn-kernels-module"></span><h2>gpasdnn.kernels module<a class="headerlink" href="#module-gpasdnn.kernels" title="Permalink to this headline">¶</a></h2>
+<p>A covariance function or kernel encodes our assumptions about the
+function which we wish to learn. This initial belief could
+be how smooth the function is or whether the function
+is periodic. Any function could be a covariance function as long
+as the resulting covariance matrix is positive semi-definite.
+The ‘Kernel’ super class modeling the kernel of a Gaussian process.
+This is the parent class that all classes (RBF, Matern, Periodic, …) will inherit. 
+It has several attributes and methods.
+The ‘count’ method is the most important of them. It counts the kernel between two location vectors x1 and x2 as follows: self.count(x1,x2).</p>
+<dl class="class">
+<dt id="gpasdnn.kernels.RBF">
+<em class="property">class </em><code class="descclassname">gpasdnn.kernels.</code><code class="descname">RBF</code><span class="sig-paren">(</span><em>length_scale=1.0</em>, <em>hyperparameter_number=2</em>, <em>variance=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.RBF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpasdnn.kernels.Kernel</span></code></p>
+<dl class="method">
+<dt id="gpasdnn.kernels.RBF.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>x</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.RBF.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Squared Exponential covariance function or RBF with isotropic distance measure.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gpasdnn.kernels.Matern12">
+<em class="property">class </em><code class="descclassname">gpasdnn.kernels.</code><code class="descname">Matern12</code><span class="sig-paren">(</span><em>length_scale=1</em>, <em>variance=1</em>, <em>hyperparameter_number=2</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.Matern12" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpasdnn.kernels.Kernel</span></code></p>
+<dl class="method">
+<dt id="gpasdnn.kernels.Matern12.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>x</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.Matern12.count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gpasdnn.kernels.Matern32">
+<em class="property">class </em><code class="descclassname">gpasdnn.kernels.</code><code class="descname">Matern32</code><span class="sig-paren">(</span><em>length_scale=1</em>, <em>variance=1</em>, <em>hyperparameter_number=2</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.Matern32" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpasdnn.kernels.Kernel</span></code></p>
+<dl class="method">
+<dt id="gpasdnn.kernels.Matern32.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>x</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.Matern32.count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gpasdnn.kernels.Matern52">
+<em class="property">class </em><code class="descclassname">gpasdnn.kernels.</code><code class="descname">Matern52</code><span class="sig-paren">(</span><em>length_scale=1</em>, <em>variance=1</em>, <em>hyperparameter_number=2</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.Matern52" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpasdnn.kernels.Kernel</span></code></p>
+<dl class="method">
+<dt id="gpasdnn.kernels.Matern52.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>x</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.Matern52.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Matern covariance function with nu = 5/2 and isotropic distance measure.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gpasdnn.kernels.Periodic">
+<em class="property">class </em><code class="descclassname">gpasdnn.kernels.</code><code class="descname">Periodic</code><span class="sig-paren">(</span><em>length_scale=1</em>, <em>period=1</em>, <em>hyperparameter_number=3</em>, <em>variance=1</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.Periodic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpasdnn.kernels.Kernel</span></code></p>
+<dl class="method">
+<dt id="gpasdnn.kernels.Periodic.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>x</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.Periodic.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stationary covariance function for a sinusoid.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gpasdnn.kernels.Periodic.get_period">
+<code class="descname">get_period</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.Periodic.get_period" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gpasdnn.kernels.Periodic.set_period">
+<code class="descname">set_period</code><span class="sig-paren">(</span><em>period</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.Periodic.set_period" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gpasdnn.kernels.Linear">
+<em class="property">class </em><code class="descclassname">gpasdnn.kernels.</code><code class="descname">Linear</code><span class="sig-paren">(</span><em>hyperparameter_number=1</em>, <em>variance=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.Linear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpasdnn.kernels.Kernel</span></code></p>
+<dl class="method">
+<dt id="gpasdnn.kernels.Linear.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>x</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.Linear.count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gpasdnn.kernels.Polynomial">
+<em class="property">class </em><code class="descclassname">gpasdnn.kernels.</code><code class="descname">Polynomial</code><span class="sig-paren">(</span><em>length_scale=0</em>, <em>hyperparameter_number=2</em>, <em>variance=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.Polynomial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gpasdnn.kernels.Kernel</span></code></p>
+<dl class="method">
+<dt id="gpasdnn.kernels.Polynomial.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>x</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gpasdnn.kernels.Polynomial.count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-gpasdnn">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-gpasdnn" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Hanany Tolba.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="_static/language_data.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
