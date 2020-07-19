@@ -71,7 +71,7 @@ setup(
         # only for the demo
     ],
     #package_data={'gpasdnn': ['keras_600/*']},
-    python_requires=">=3.6, <3.8",
+    #python_requires=">=3.6, <3.8",
     include_package_data=True,
 
     classifiers=[
