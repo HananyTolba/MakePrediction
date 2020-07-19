@@ -31,6 +31,12 @@ from setuptools import setup, find_packages
 with open('gpasdnn/version.py') as f:
     exec(f.read())
 
+from os import path
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
+
 setup(
     name='gpasdnn',         # How you named your package folder (MyLib)
     packages=['gpasdnn'],
@@ -45,7 +51,7 @@ setup(
     license="Apache License 2.0",
     description="Fast and easy gaussian process regression using deep  neural networks’s with tensorflow",
     author=__author__, 
-    long_description = __doc__,                 # Type in your name
+    long_description = long_description,                 # Type in your name
     author_email=__email__,
     # Provide either the link to your github or to your website
     url='https://github.com/hananytolba',

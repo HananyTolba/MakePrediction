@@ -1,0 +1,8 @@
+numpy
+colorama
+tqdm
+termcolor
+scipy
+scikit_learn
+tensorflow
+pandas
