@@ -962,7 +962,7 @@ class KernelProduct(Kernel):
 
 
 if __name__ == "__main__":
-    from gpbytf.kernels import *
+    from gpasdnn.kernels import *
     import numpy as np
     import matplotlib.pyplot as plt
     x = np.linspace(0,3,1000)

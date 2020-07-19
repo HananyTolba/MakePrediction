@@ -1,5 +1,5 @@
 <div style="text-align:center">
-<img width="500" height="200" src="./docs/source/images/logo.png">
+<img width="500" height="200" src="docs/source/images/logo.png">
 </div>
 
 
@@ -15,7 +15,6 @@ It was originally created by [Hanany Tolba].
 ## What does GPasDNN do?
 
 
-## Install GPflow 2
 
 ### Latest release from PyPI
 
