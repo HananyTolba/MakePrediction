@@ -80,17 +80,28 @@ setup(
     python_requires=">=3.6, <=3.8",
     include_package_data=True,
 
+    # classifiers=[
+    #     "Programming Language :: Python",
+    #     "Development Status :: 1 - Planning",
+    #     "License :: OSI Approved",
+    #     "Natural Language :: French",
+    #     "Operating System :: OS Independent",
+    #     "Programming Language :: Python :: 2.7",
+    #     "Topic :: Communications",
+    # ],
+
     classifiers=[
         # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as
         # the current state of your package
         'Development Status :: 4 - Beta',
-        'License :: OSI Approved :: Apache Software License  2.0',
+        'License :: Apache  2.0',
         'Natural Language :: English',
-        'Operating System :: MacOS :: MacOS X',
-        'Operating System :: Microsoft :: Windows',
-        'Operating System :: POSIX :: Linux',
+        'Operating System :: OS Independent',
+
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
     ]
 )
