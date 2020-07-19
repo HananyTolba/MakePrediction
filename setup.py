@@ -31,11 +31,11 @@ from setuptools import setup, find_packages
 with open('gpasdnn/version.py') as f:
     exec(f.read())
 
-from os import path
-this_directory = path.abspath(path.dirname(__file__))
-with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
-
+try:
+    import pypandoc
+    long_description = pypandoc.convert('README.md', 'rst')
+except(IOError, ImportError):
+    long_description = open('README.md').read()
 
 setup(
     name='gpasdnn',         # How you named your package folder (MyLib)
@@ -90,11 +90,13 @@ setup(
     #     "Topic :: Communications",
     # ],
 
+
+
     classifiers=[
         # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as
         # the current state of your package
         'Development Status :: 4 - Beta',
-        'License :: Apache  2.0',
+        'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Operating System :: OS Independent',
 

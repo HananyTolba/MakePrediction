@@ -7,20 +7,39 @@ Author: Hanany Tolba
 Author-email: hananytolba@yahoo.com
 License: Apache License 2.0
 Download-URL: https://github.com/hananytolba
-Description: 
-        Fast and easy gaussian process regression using deep learning with tensorflow
+Description: Welcome to gpasdnn's documentation!
+        ===================================
         
+        To install gpasdnn:
+        -------------------
         
+            Gaussian Process as deep Neural-Network gpasdnn can be installed by cloning the repository and running in the root folder:
+            1) pip install . 
+            This also installs required dependencies including TensorFlow, and sets everything up. Or with:
+            2) pip install gpasdnn 
+            
+            Gaussian process regression (GPR):
+            =====================================
+            This package use a tensorflow pretrained model to estimate the Hyperparameters of 
+            a GPR model and then fitting the data with.
         
+            The advantages of Gaussian processes are:
+                1) The prediction interpolates the observations.
+                2) The prediction is probabilistic (Gaussian) so that one can compute empirical confidence intervals and decide based on those if one should refit (online fitting, adaptive fitting) the prediction in some region of interest.
+                3) Versatile: different kernels can be specified. Common kernels are provided, but it is also possible to specify custom kernels.
+        
+            In addition to standard scikit-learn estimator API,
+               1) The methods proposed here are much faster than standard scikit-learn estimator API.
+               2) The prediction method here "predict" is very complete compared to scikit-learn estimator API with many options such as:
+                 "sparse" and the automatic online update of prediction.
 Keywords: Gaussian Process Regression,Time series prediction,Tensorflow,Deep Learning
 Platform: UNKNOWN
 Classifier: Development Status :: 4 - Beta
-Classifier: License :: OSI Approved :: Apache Software License  2.0
+Classifier: License :: OSI Approved :: Apache Software License
 Classifier: Natural Language :: English
-Classifier: Operating System :: MacOS :: MacOS X
-Classifier: Operating System :: Microsoft :: Windows
-Classifier: Operating System :: POSIX :: Linux
+Classifier: Operating System :: OS Independent
 Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
 Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
 Requires-Python: >=3.6, <=3.8
