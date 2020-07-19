@@ -28,6 +28,7 @@ from collections import Counter
 import os
 import glob
 import sys
+import site
 from numpy.linalg import inv
 from sklearn.linear_model import LinearRegression
 #from sklearn.metrics import mean_squared_error as mse
@@ -66,7 +67,9 @@ __all__ = ["GaussianProcessRegressor","RBF","Matern52",
 
 #path = site.getsitepackages()[0]
 
-path_list = list(filter(lambda x: x.endswith('site-packages') ,sys.path))
+#path_list = list(filter(lambda x: x.endswith('site-packages') ,sys.path))
+
+path_list = site.getsitepackages()
 path = path_list[0]
 
 path = path + '/gpasdnn/gpTFModels'
