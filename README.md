@@ -1,9 +1,6 @@
-<div style="text-align:center">
-<img width="500" height="200" src="docs/source/images/logo.png">
-</div>
 
-
-
+<!-- ![alt text](http://url/to/img.png)
+ -->
 
 
 GPasDNN is a package for building Gaussian process models in Python, using TensorFlow (http://www.tensorflow.org).
