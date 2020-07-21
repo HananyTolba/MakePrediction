@@ -1,9 +1,9 @@
 from gpasdnn.kernels import *
 from gpasdnn.gp import GaussianProcessRegressor as GPR
-
+import numpy as np
 class QuasiGPR():
     '''
-    
+
     '''
 
     def __init__(self,xtrain,ytrain,kernel = RBF(),modelList = None):
