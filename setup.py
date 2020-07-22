@@ -31,11 +31,11 @@ from setuptools import setup, find_packages
 with open('gpasdnn/version.py') as f:
     exec(f.read())
 
-try:
-    import pypandoc
-    long_description = pypandoc.convert('README.md', 'rst')
-except(IOError, ImportError):
-    long_description = open('README.md').read()
+# try:
+#     import pypandoc
+#     long_description = pypandoc.convert('README.md', 'rst')
+# except(IOError, ImportError):
+#     long_description = open('README.md').read()
 
 setup(
     name='gpasdnn',         # How you named your package folder (MyLib)
@@ -51,7 +51,9 @@ setup(
     license="GPLv3",
     description="Fast and easy gaussian process regression using deep  neural networks’s with tensorflow",
     author=__author__, 
-    long_description = long_description,                 # Type in your name
+    #long_description = long_description,
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',                 # Type in your name
     author_email=__email__,
     # Provide either the link to your github or to your website
     url='https://github.com/hananytolba',
