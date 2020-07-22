@@ -48,7 +48,7 @@ setup(
 
     # Chose a license from here:
     # https://help.github.com/articles/licensing-a-repository
-    license="Apache License 2.0",
+    license="GPLv3",
     description="Fast and easy gaussian process regression using deep  neural networks’s with tensorflow",
     author=__author__, 
     long_description = long_description,                 # Type in your name
@@ -96,7 +96,10 @@ setup(
         # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as
         # the current state of your package
         'Development Status :: 4 - Beta',
-        'License :: OSI Approved :: Apache Software License',
+        #'License :: OSI Approved :: Apache Software License',
+        #'License :: OSI Approved :: Apache Software License',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+
         'Natural Language :: English',
         'Operating System :: OS Independent',
 
