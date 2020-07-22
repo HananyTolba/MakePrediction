@@ -543,7 +543,7 @@ class GaussianProcessRegressor():
         self.set_hyperparameters(hyp_dict)
 
 
-    def fit(self,p0=None):
+    def fit(self):
         '''
         This method allows the estimation of the hyperparameters of the GPR model.
         '''
@@ -623,6 +623,7 @@ class GaussianProcessRegressor():
                 #yp,_ = self.predict(xtrain,ytrain)
                 #sig = (ytrain - yp).std()
                 self.std_noise = parmsfit_by_sampling[0]*stdy
+                self._kernel._variance = stdy**2
 
 
                 #self.std_noise = parmsfit_by_sampling[1]
@@ -639,6 +640,7 @@ class GaussianProcessRegressor():
                 #self.std_noise = sig
                 self.std_noise = parmsfit_by_sampling[1]*stdy
 
+                self._kernel._variance = stdy**2
 
             # elif self._kernel.__class__.__name__ in ["Cosine", "Exponential"]:
             #     self._kernel.set_length_scale(parmsfit_by_sampling[0])

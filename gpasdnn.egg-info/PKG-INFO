@@ -1,18 +1,15 @@
 Metadata-Version: 1.2
 Name: gpasdnn
-Version: 0.0.2
+Version: 0.0.3
 Summary: Fast and easy gaussian process regression using deep  neural networks’s with tensorflow
 Home-page: https://github.com/hananytolba
 Author: Hanany Tolba
 Author-email: hananytolba@yahoo.com
-License: Apache License 2.0
+License: GPLv3
 Download-URL: https://github.com/hananytolba
-Description: <div style="text-align:center">
-        <img width="500" height="200" src="docs/source/images/logo.png">
-        </div>
-        
-        
-        
+Description: 
+        <!-- ![alt text](http://url/to/img.png)
+         -->
         
         
         GPasDNN is a package for building Gaussian process models in Python, using TensorFlow (http://www.tensorflow.org).
@@ -20,32 +17,45 @@ Description: <div style="text-align:center">
          
          *GPasDNN is an open source project. If you have relevant skills and are interested in contributing then please do contact us (hananytolba@yahoo.com).*
         
+         Gaussian process regression (GPR):
+        =====================================
+        This implementation use a tensorflow pretrained model to estimate the Hyperparameters of a GPR model and then fitting the data with.
+        The advantages of Gaussian processes are:
+           * The prediction interpolates the observations.
+           * The prediction is probabilistic (Gaussian) so that one can compute empirical confidence intervals and decide based on those if one should refit (online fitting, adaptive fitting) the prediction in some region of interest.
+           * Versatile: different kernels can be specified. Common kernels are provided, but it is also possible to specify custom kernels.
+        
+        In addition to standard scikit-learn estimator API,
+           * The methods proposed here are much faster than standard scikit-learn estimator API.
+           * The prediction method here "predict" is very complete compared to scikit-learn estimator API with many options such as:
+            "sparse" and the automatic online update of prediction.
+        
+           
+        
         
         ## What does GPasDNN do?
         
         
         
+        
         ### Latest release from PyPI
         
-        ```bash
         pip install gpasdnn
-        ```
+        
         
         
         ### Latest source from GitHub
         
         *Be aware that the `master` branch may change regularly, and new commits may break your code.*
         
-        [GPasDNN GitHub repository](https://github.com/HananyTolba/Gaussian-process-as-deep-neural-network.git), run
-        ```bash
+        [GPasDNN GitHub repository](https://github.com/HananyTolba/Gaussian-process-as-deep-neural-network.git), run:
         pip install  .
-        ```
         
         
 Keywords: Gaussian Process Regression,Time series prediction,Tensorflow,Deep Learning
 Platform: UNKNOWN
 Classifier: Development Status :: 4 - Beta
-Classifier: License :: OSI Approved :: Apache Software License
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
 Classifier: Natural Language :: English
 Classifier: Operating System :: OS Independent
 Classifier: Programming Language :: Python :: 3.6
