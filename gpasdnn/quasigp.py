@@ -28,6 +28,7 @@ from termcolor import *
 import colorama
 import joblib 
 import matplotlib.pyplot as plt
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 colorama.init()
 
@@ -38,7 +39,8 @@ class QuasiGPR():
     of several GaussianProcesses.
     '''
 
-    def __init__(self,xtrain=None,ytrain=None,kernel = RBF(), yfit = None,std_yfit=None, modelList = None, components=None):
+    def __init__(self,xtrain=None,ytrain=None,kernel = RBF(), yfit = None,std_yfit=None, modelList = None, components=None
+        ,xtest=None,ypred=None,std_ypred=None):
         self._xtrain = xtrain
         self._ytrain = ytrain
         self._kernel = kernel
@@ -47,22 +49,51 @@ class QuasiGPR():
         self.components = components
         self._yfit = yfit
         self._std_yfit = std_yfit
-        #self._xtest = xtest
+        self._xtest = xtest
         #self._ytest = ytest
-        #self._ypred = ypred
+        self._ypred = ypred
+        self._std_ypred = std_ypred
 
 
 
 
-    def plot(self):
-        plt.figure(figsize=(12,5))
-        plt.plot(self._xtrain,self._ytrain,'k',lw=1,label="Training data")
-        #plt.plot(xtest,(ytest),'g',lw=3,label="test data")
-        #plt.plot(xs,(yp),'b',lw=2,label="Prediction")
-        plt.plot(self._xtrain,self._yfit,'r',lw=2,label="Model")
-        #plt.fill_between(xs, (yp - 1.96*stdpred), (yp + 1.96*stdpred),color="b", alpha=0.2,label='Confidence Interval 95%')
-        plt.legend()
-        plt.show()
+
+    def plot(self,prediction=None,ci=None):
+        if prediction is None:
+            prediction =False
+        if ci is None:
+            ci = True
+
+
+        if prediction:
+            if ci:
+                plt.figure(figsize=(12,5))
+                plt.plot(self._xtrain,self._ytrain,'k',lw=1,label="Training data")
+                #plt.plot(self._xtest,self._ytest,'g',lw=3,label="test data")
+                plt.plot(self._xtest,self._ypred,'b',lw=2,label="Prediction")
+                plt.plot(self._xtrain,self._yfit,'r',lw=2,label="Model")
+                plt.fill_between(self._xtest, (self._ypred - 1.96*self._std_ypred), (self._ypred + 1.96*self._std_ypred),color="b", alpha=0.2,label='Confidence Interval 95%')
+                plt.legend()
+                plt.show()
+            else:
+                plt.figure(figsize=(12,5))
+                plt.plot(self._xtrain,self._ytrain,'k',lw=1,label="Training data")
+                #plt.plot(self._xtest,self._ytest,'g',lw=3,label="test data")
+                plt.plot(self._xtest,self._ypred,'b',lw=2,label="Prediction")
+                plt.plot(self._xtrain,self._yfit,'r',lw=2,label="Model")
+                #plt.fill_between(self._xtest, (self._ypred - 1.96*stdpred), (self._ypred + 1.96*stdpred),color="b", alpha=0.2,label='Confidence Interval 95%')
+                plt.legend()
+                plt.show()
+
+        else:
+            plt.figure(figsize=(12,5))
+            plt.plot(self._xtrain,self._ytrain,'k',lw=1,label="Training data")
+            #plt.plot(xtest,(ytest),'g',lw=3,label="test data")
+            #plt.plot(xs,(yp),'b',lw=2,label="Prediction")
+            plt.plot(self._xtrain,self._yfit,'r',lw=2,label="Model")
+            plt.fill_between(self._xtrain, (self._yfit - 1.96* self._std_yfit), (self._yfit + 1.96* self._std_yfit),color="b", alpha=0.2,label='Confidence Interval 95%')
+            plt.legend()
+            plt.show()
 
 
     def components_plot(self):
@@ -75,6 +106,25 @@ class QuasiGPR():
                 ax[i].set_title("The {}-th component ({})".format(i,kernel_list[i]))
             plt.show()
 
+    def score(self,ytest = None):
+        if ytest is None:
+            L_score = [mean_absolute_error(self._ytrain,self._yfit) ,
+            mean_squared_error(self._ytrain,self._yfit) ,
+             r2_score(self._ytrain,self._yfit)]
+            d = dict(zip(["MAE","MSE","R2"],L_score))
+
+            
+        else:
+            L_score = [mean_absolute_error(ytest,self._ypred) ,
+            mean_squared_error(ytest,self._ypred) ,
+             r2_score(ytest,self._ypred)]
+            d = dict(zip(["MAE","MSE","R2"],L_score))
+            
+
+        return d
+
+
+        
 
 
     @classmethod
@@ -211,10 +261,12 @@ class QuasiGPR():
         #return models
     def predict(self, xt=None, yt=None, horizon=1,option=True, sparse = None, sparse_size=None, components=None):
 
+        self._xtest = xt
 
         if xt is None:
             ypred_,std_ = self._yfit, self._std_yfit
             cmps = self.components
+
         else:
 
             if self._modelList.__class__.__name__ == "GaussianProcessRegressor": 
@@ -241,7 +293,12 @@ class QuasiGPR():
                 std_ = sum(yt_std_list)
                 cmps = np.array(yt_pred_list)
 
+
+        self._ypred = ypred_
+        self._std_ypred = std_
+
         if components:
+
             return ypred_,std_, cmps
         else:
             return ypred_,std_
