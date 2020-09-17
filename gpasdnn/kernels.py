@@ -15,7 +15,7 @@ The 'count' method is the most important of them. It counts the kernel between t
 
 #from __future__ import absolute_import
 import numpy as np
-#import re
+import pandas as pd
 
 
 #def func_(s): return ' '.join(re.sub(r"([A-Z])", r" \1", s).split())
@@ -263,19 +263,28 @@ class Kernel:
                 Q = U@np.diag(np.sqrt(s))
         return Q
 
+    @staticmethod
+    def date2num(dt):
+        if isinstance(dt, pd.DatetimeIndex):
+            x = dt.astype(int).values/10**9/3600/24
+        elif isinstance(dt, np.ndarray):
+            if dt.ndim == 1:
+                x = dt
+            elif 1 in dt.shape:
+                x = dt.ravel()
+            else:
+                raise ValueError('The {} must be a one dimension numpy array'.format(dt))
+        else:
+            raise TypeError('The {} must be a numpy vector or pandas DatetimeIndex'.format(dt))
+        return x
 
-    
-
-    def simulate(self, x: "numpy vector", y: "numpy vector" = None,seed=None) ->  "numpy vector":
+    def simulate(self, dt: "np.ndarray or pd.DatetimeIndex " = None,seed=None) ->  "np.ndarray":
         '''
          This method allows the simulation of a Gaussian process (1d) on a domain x.
         '''
-        #x = self.x_type(x)
-        if y is None:
-            y = x
-        
+        x = self.date2num(dt)
 
-        x = x.ravel()
+        #x = x.ravel()
         m = x.size
 
         K = self.count(x)

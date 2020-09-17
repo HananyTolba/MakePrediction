@@ -21,6 +21,7 @@ from gpasdnn.invtools import fast_pd_inverse as pdinv
 from gpasdnn.invtools import inv_col_add_update, inv_col_pop_update
 import gpasdnn.kernels as kernels
 from gpasdnn.kernels import *
+#####from gpasdnn.kernels import date2num
 
 import inspect
 import pandas as pd
@@ -53,8 +54,19 @@ from termcolor import *
 import colorama
 colorama.init()
 
-
-
+def date2num(dt):
+    if isinstance(dt, pd.DatetimeIndex):
+        x = dt.astype(int).values/10**9/3600/24
+    elif isinstance(dt, np.ndarray):
+        if dt.ndim == 1:
+            x = dt
+        elif 1 in dt.shape:
+            x = dt.ravel()
+        else:
+            raise ValueError('The {} must be a one dimension numpy array'.format(dt))
+    else:
+        raise TypeError('The {} must be a numpy vector or pandas DatetimeIndex'.format(dt))
+    return x
 
 # cprint('hello'.upper(), 'green')
 
@@ -445,6 +457,9 @@ class GaussianProcessRegressor():
 
 
 
+        #x = date2num(x)
+
+
         #x,y = self._xtrain, self._ytrain
 
         ystd = y.std()
@@ -491,6 +506,8 @@ class GaussianProcessRegressor():
     def period_est(self):
         pp = []
         x,y = self._xtrain, self._ytrain
+
+        x = date2num(x)
 
         hyp = self.p_fit(x,y)
         if int(.001*x.size >10):
@@ -548,6 +565,8 @@ class GaussianProcessRegressor():
         This method allows the estimation of the hyperparameters of the GPR model.
         '''
         xtrain, ytrain = self._xtrain, self._ytrain
+
+        xtrain = date2num(xtrain)
 
         xtrain,ytrain = self._sorted(xtrain,ytrain)
 
@@ -677,6 +696,10 @@ class GaussianProcessRegressor():
         '''
         xtrain, ytrain = self._xtrain, self._ytrain
 
+        xtrain = date2num(xtrain)
+        xtest = date2num(xtest)
+
+
         xtrain = self.x_type(xtrain)
         ytrain = self.x_type(ytrain)
         xtest = self.x_type(xtest)
@@ -729,6 +752,8 @@ class GaussianProcessRegressor():
         '''
 
         xtrain, ytrain = self._xtrain, self._ytrain
+        
+        xtrain = date2num(xtrain)
 
 
         xtrain = self.x_type(xtrain)
@@ -798,6 +823,8 @@ class GaussianProcessRegressor():
 
         x_train, y_train = self._xtrain, self._ytrain
 
+        x_train = date2num(x_train)
+        xt = date2num(xt)
 
         # if yt is None:
         #     #message = "forecasting started ..."
@@ -923,6 +950,9 @@ class GaussianProcessRegressor():
         '''
         x_train, y_train = self._xtrain, self._ytrain
 
+        x_train = date2num(x_train)
+
+
         if sparse is None:
             sparse = False
 
@@ -949,6 +979,8 @@ class GaussianProcessRegressor():
                 xt = np.copy(xtrain)
             else:
                 xt = x_train
+        else:
+            xt = date2num(xt)
 
         x_train = self.x_type(x_train)
         y_train = self.x_type(y_train)
