@@ -8,7 +8,7 @@ from gpasdnn import invtools
 
 from gpasdnn import version 
 
-__all__ = ["gp","kernels","invtools",]
+__all__ = ["gp","kernels","invtools","gpnew","quasigp"]
 
 
 __author__ = version.__author__

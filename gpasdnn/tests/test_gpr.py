@@ -27,12 +27,12 @@ def test_gpr_kernel_choice(kernel):
 	gpr.kernel_choice = kernel
 	assert gpr._kernel.__class__.__name__.upper()== kernel.upper()
 
-@pytest.mark.parametrize('kernel', kers)
-def test_tf_model(kernel):
-    gpr = GPR(x,y)
-    gpr.kernel_choice = kernel
-    #print(type(gpr._model))
-    assert isinstance(gpr._model,tensorflow.keras.Model)
+# @pytest.mark.parametrize('kernel', kers)
+# def test_tf_model(kernel):
+#     gpr = GPR(x,y)
+#     gpr.kernel_choice = kernel
+#     #print(type(gpr._model))
+#     assert isinstance(gpr._model,tensorflow.keras.Model)
 
 
 @pytest.mark.parametrize('kernel', kers)

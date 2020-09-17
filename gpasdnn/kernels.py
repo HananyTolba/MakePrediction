@@ -265,7 +265,8 @@ class Kernel:
 
     @staticmethod
     def date2num(dt):
-        if isinstance(dt, pd.DatetimeIndex):
+        #if isinstance(dt, pd.DatetimeIndex):
+        if np.issubdtype(dt.dtype, np.datetime64):
             x = dt.astype(int).values/10**9/3600/24
         elif isinstance(dt, np.ndarray):
             if dt.ndim == 1:

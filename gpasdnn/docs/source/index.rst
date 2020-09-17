@@ -7,9 +7,9 @@ To install gpasdnn:
 -------------------
 
 	GPasDNN can be installed by cloning the repository and running in the root folder:
-	1- pip install . 
+	* pip install . 
 	This also installs required dependencies including TensorFlow, and sets everything up. Or with:
-	*   pip install gpasdnn 
+	* pip install gpasdnn 
 
 
 
@@ -18,11 +18,8 @@ To install gpasdnn:
    :maxdepth: 2
    :caption: Contents:
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
 
-
+   GaussianProcessForTimeSeriesPrediction.ipynb
 
 Indices and tables
 ==================
