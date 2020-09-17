@@ -66,20 +66,21 @@ setup(
     platforms= [],
     # Keywords that define your package best
     install_requires=[            # I get to this in a second
-        'numpy',
+        "numpy<1.19.0,>=1.16.0",
         "colorama",
         "tqdm",
         "termcolor",
         "scipy",
         #"keras",
         "scikit_learn",
-        "tensorflow==2.1.0",
+        "tensorflow", #
+        #"tensorflow==2.1.0", #
         "matplotlib",
         "pandas",
         # only for the demo
     ],
     #package_data={'gpasdnn': ['keras_600/*']},
-    python_requires=">=3.6, <=3.8",
+    python_requires=">=3.6, <=3.8.5",
     include_package_data=True,
 
     # classifiers=[
