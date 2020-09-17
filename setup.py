@@ -73,8 +73,8 @@ setup(
         "scipy",
         #"keras",
         "scikit_learn",
-        "tensorflow",
-        #"matplotlib",
+        "tensorflow==2.1.0",
+        "matplotlib",
         "pandas",
         # only for the demo
     ],
