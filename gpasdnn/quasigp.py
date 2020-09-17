@@ -27,6 +27,7 @@ from tqdm import tqdm
 from termcolor import *
 import colorama
 import joblib 
+import matplotlib.pyplot as plt
 
 colorama.init()
 
@@ -46,6 +47,34 @@ class QuasiGPR():
         self.components = components
         self._yfit = yfit
         self._std_yfit = std_yfit
+        #self._xtest = xtest
+        #self._ytest = ytest
+        #self._ypred = ypred
+
+
+
+
+    def plot(self):
+        plt.figure(figsize=(12,5))
+        plt.plot(self._xtrain,self._ytrain,'k',lw=1,label="Training data")
+        #plt.plot(xtest,(ytest),'g',lw=3,label="test data")
+        #plt.plot(xs,(yp),'b',lw=2,label="Prediction")
+        plt.plot(self._xtrain,self._yfit,'r',lw=2,label="Model")
+        #plt.fill_between(xs, (yp - 1.96*stdpred), (yp + 1.96*stdpred),color="b", alpha=0.2,label='Confidence Interval 95%')
+        plt.legend()
+        plt.show()
+
+
+    def components_plot(self):
+        kernel_list = self._kernel.label().split(' + ')
+        m = len(kernel_list)
+        if m>1:
+            fig,ax = plt.subplots(m,1,figsize=(10,10),sharex=True)
+            for i in range(m):
+                ax[i].plot(self.components[i],'b')
+                ax[i].set_title("The {}-th component ({})".format(i,kernel_list[i]))
+            plt.show()
+
 
 
     @classmethod
