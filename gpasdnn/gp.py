@@ -171,22 +171,22 @@ __all__ = ["GaussianProcessRegressor","RBF","Matern52",
 
 #path_list = list(filter(lambda x: x.endswith('site-packages') ,sys.path))
 
-import sysconfig, os, glob
-#path_list_1 = site.getsitepackages()
-#print("path_list_1",path_list_1)
-path = sysconfig.get_paths()["purelib"]
+# import sysconfig, os, glob
+# #path_list_1 = site.getsitepackages()
+# #print("path_list_1",path_list_1)
+# path = sysconfig.get_paths()["purelib"]
 
 
-path = os.path.join(path,'gpasdnn/SavedModels')
+# path = os.path.join(path,'gpasdnn/SavedModels')
 
 
 
 
-file_name = [os.path.join(path,f) for f in os.listdir(path) if not f.startswith('.')]
+# file_name = [os.path.join(path,f) for f in os.listdir(path) if not f.startswith('.')]
 
 
-path_periodic = os.path.join(path, "periodic_1d")
-path_periodic_noise = os.path.join(path, "iid_periodic_300")
+# path_periodic = os.path.join(path, "periodic_1d")
+# path_periodic_noise = os.path.join(path, "iid_periodic_300")
 
 
 #print(path_periodic in file_name)
@@ -210,7 +210,7 @@ class_names = ['Linear', 'Linear + Periodic', 'Periodic', 'Polynomial',
 #print(path_periodic)
 #K.clear_session()
 #newModel = load_model(path_periodic)
-newModel = tf.saved_model.load(path_periodic)
+#newModel = tf.saved_model.load(path_periodic)
 #infer = loaded_model.signatures["serving_default"]
 
 
@@ -218,7 +218,7 @@ newModel = tf.saved_model.load(path_periodic)
 #print(path_periodic)
 #K.clear_session()
 #model_periodic_noise = load_model(path_periodic_noise)
-model_periodic_noise = tf.saved_model.load(path_periodic_noise)
+#model_periodic_noise = tf.saved_model.load(path_periodic_noise)
 
 
 # import inspect
@@ -357,13 +357,13 @@ class GaussianProcessRegressor():
 
         self._kernel = kernel
         #path = file_list[file_name.index('rbf_1d')]
-        path = list(filter(lambda x: 'rbf_1d' in x, file_name))[0]
+        #path = list(filter(lambda x: 'rbf_1d' in x, file_name))[0]
         #K.clear_session()
-        best_model = tf.saved_model.load(path)
+        #best_model = tf.saved_model.load(path)
 
 
         #best_model = load_model(path)
-        self._model = best_model
+        #self._model = best_model
         self._sigma_n = sigma_n
         # self._pred = pred
 
@@ -451,12 +451,12 @@ class GaussianProcessRegressor():
         else:
             location = Kernels_class_names.index(kernel)
             str_kernel = kernel + '_1d'
-            path_model = list(filter(lambda x: str_kernel in x, file_name))[0]
+            #path_model = list(filter(lambda x: str_kernel in x, file_name))[0]
             #path_model = file_list[file_name.index(str_kernel)]
             #K.clear_session()  # pour accelerer keras model load
 
             #best_model = load_model(path_model)
-            best_model = tf.saved_model.load(path_model)
+            #best_model = tf.saved_model.load(path_model)
 
             #try:
                 #best_model = load_model(path_model)
@@ -469,7 +469,7 @@ class GaussianProcessRegressor():
                 self._kernel.set_period(1)
 
 
-            self._model = best_model
+            #self._model = best_model
 
 
     # @classmethod
