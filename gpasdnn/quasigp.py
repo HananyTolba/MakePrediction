@@ -16,6 +16,7 @@
 
 
 import pandas as pd 
+import itertools
 
 
 from gpasdnn.kernels import *
@@ -58,18 +59,21 @@ class QuasiGPR():
 
 
 
-    def plot(self,prediction=None,ci=None):
+    def plot(self,prediction=None,ci=None,xtest=None,ytest=None):
         if prediction is None:
             prediction =False
         if ci is None:
             ci = True
 
+        test_None = all(elem is not None for elem in [xtest,ytest])
 
         if prediction:
             if ci:
                 plt.figure(figsize=(12,5))
-                plt.plot(self._xtrain,self._ytrain,'k',lw=1,label="Training data")
-                #plt.plot(self._xtest,self._ytest,'g',lw=3,label="test data")
+                if test_None:
+                    plt.plot(xtest,ytest,'ok',lw=1,label="Test data")
+   
+                plt.plot(self._xtrain,self._ytrain,'k',lw=1,label="Train data")
                 plt.plot(self._xtest,self._ypred,'b',lw=2,label="Prediction")
                 plt.plot(self._xtrain,self._yfit,'r',lw=2,label="Model")
                 plt.fill_between(self._xtest, (self._ypred - 1.96*self._std_ypred), (self._ypred + 1.96*self._std_ypred),color="b", alpha=0.2,label='Confidence Interval 95%')
@@ -77,6 +81,9 @@ class QuasiGPR():
                 plt.show()
             else:
                 plt.figure(figsize=(12,5))
+                if test_None:
+                    plt.plot(xtest,ytest,'ok',lw=1,label="Test data")
+   
                 plt.plot(self._xtrain,self._ytrain,'k',lw=1,label="Training data")
                 #plt.plot(self._xtest,self._ytest,'g',lw=3,label="test data")
                 plt.plot(self._xtest,self._ypred,'b',lw=2,label="Prediction")
@@ -88,6 +95,9 @@ class QuasiGPR():
         else:
             plt.figure(figsize=(12,5))
             plt.plot(self._xtrain,self._ytrain,'k',lw=1,label="Training data")
+            if test_None:
+                plt.plot(xtest,ytest,'ok',lw=1,label="Test data")
+   
             #plt.plot(xtest,(ytest),'g',lw=3,label="test data")
             #plt.plot(xs,(yp),'b',lw=2,label="Prediction")
             plt.plot(self._xtrain,self._yfit,'r',lw=2,label="Model")
@@ -175,13 +185,48 @@ class QuasiGPR():
             else:
                 raise ValueError("Error in kernel name choice '{} != {}'.".format(self._modelList[k]._kernel.label(),h[0]))
     
-    def save_model(self,filename):
+    def save(self,filename):
         #if "_model" in self.__dict__.keys():
         #    self.__dict__.pop("_model")
         joblib.dump(self, filename + '.joblib')
         
-    def load_model(self,path):
+    def load(self,path):
         return joblib.load(path) 
+
+
+    def FitBySearch(self,error=None,methods=None):
+
+        score_list = []
+
+
+        if error is None:
+            error = "MSE"
+        if methods is None:
+            set_methods = ["regular","split","resample"]
+            set_methods = set_methods + list(map(lambda x: "inter" + x,set_methods))
+        else:
+            set_methods = methods
+
+        number_combinaison = self._kernel.label().split(' + ').count('Periodic')
+
+        if number_combinaison>1:
+            all_mth = list(itertools.permutations(set_methods,number_combinaison))
+        else:
+            all_mth = set_methods
+        for mm in all_mth:
+            if isinstance(mm, tuple):
+                mm = list(mm)
+
+            self.fit(method=mm)
+
+            score = self.score()
+            score_list.append(score[error])
+
+        return all_mth[np.argmin(score_list)]
+
+
+
+
 
 
 

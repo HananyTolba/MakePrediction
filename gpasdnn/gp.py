@@ -89,6 +89,10 @@ def most_frequent(List):
 import json
 import requests
 
+
+SMALL_SIZE  = 300
+LARGE_SIZE  = 600
+
 Ports = list(range(8501,8509))
 kernels = ["rbf_1d","matern12_1d","matern32_1d","matern52_1d",
           "linear_1d",
@@ -105,9 +109,9 @@ def get_parms_from_api(y,kernel=None):
     data = {"inputs":y.tolist()}
     
     if kernel is None:
-        if y.size == 600:
+        if y.size == LARGE_SIZE:
             kernel="rbf"
-        elif y.size== 300:
+        elif y.size== SMALL_SIZE:
             kernel = "periodic"
     
     
@@ -117,7 +121,8 @@ def get_parms_from_api(y,kernel=None):
         kernel = kernel.lower() + "_1d"
         port = PORTS[kernel]
         
-    url_ec2 = "http://35.181.93.203:"+ str(port) + "/v1/models/"
+    url_ec2 = "http://www.makeprediction.com:" + str(port) + "/v1/models/"
+
     url_ec2 = url_ec2 + kernel + ":predict"
     #print("requests :" ,url_ec2)
     r = requests.post(url_ec2, data=json.dumps(data))
@@ -128,13 +133,13 @@ def get_parms_from_api(y,kernel=None):
 #     n = y.size
 #     p=1
 #     parms = []
-#     if (n<size_small):
-#         print("Choisir une autre méthode car length < size_small points.")
+#     if (n<SMALL_SIZE ):
+#         print("Choisir une autre méthode car length < SMALL_SIZE  points.")
         
         
-#     while int(n*p)>=size_small:
+#     while int(n*p)>=SMALL_SIZE :
 #         m = n*p
-#         yre12 = scipy.signal.resample(y[:int(m)],size_small)
+#         yre12 = scipy.signal.resample(y[:int(m)],SMALL_SIZE )
 #         p_est_12 = mdlPeriodic.predict(yre12.reshape(1,-1)).ravel()
 #         p_est_12[-1] =p_est_12[-1]*int(m)/y.size
 #         if ((p==1)&(p_est_12[-1]>.95)):
@@ -157,14 +162,13 @@ def get_parms_from_api(y,kernel=None):
         
         
 
-size_small = 300
-size_large = 600
 
 
-__all__ = ["GaussianProcessRegressor","RBF","Matern52",
-"Matern32", "Matern12", "Periodic", "Polynomial","Periodic"]
 
-#import site
+# __all__ = ["GaussianProcessRegressor","RBF","Matern52",
+# "Matern32", "Matern12", "Periodic", "Polynomial","Periodic"]
+
+# #import site
 
 
 #path = site.getsitepackages()[0]
@@ -201,7 +205,7 @@ class_names = ['Linear', 'Linear + Periodic', 'Periodic', 'Polynomial',
 
 
 #path_predict_model = path + '/predict_gpr_model'
-#model_expression = keras.models.load_model("/Users/tolba/Desktop/gpasdnn/keras_size_large/predict_gpr_model")
+#model_expression = keras.models.load_model("/Users/tolba/Desktop/gpasdnn/keras_LARGE_SIZE /predict_gpr_model")
 
 #model_expression = load_model(path_predict_model)
 #probability_model = tf.keras.Sequential([model_expression, tf.keras.layers.Softmax()])
@@ -579,7 +583,7 @@ class GaussianProcessRegressor():
         
         n = y.size
 #=================================================================
-        x_interp = np.linspace(-1, 1, size_small)
+        x_interp = np.linspace(-1, 1, SMALL_SIZE )
 
         x_transform, a, b = self.line_transform(x.reshape(-1, 1))
 
@@ -598,7 +602,7 @@ class GaussianProcessRegressor():
         self._sigma_n = noise_std[0]*ystd
         #print("period_est_ (methode1) :",period_est_)
 #=================================================================
-        # x_interp = np.linspace(-1,1,size_small)
+        # x_interp = np.linspace(-1,1,SMALL_SIZE )
         # y_interp = np.interp(x_interp, x, y)
 
         
@@ -633,18 +637,18 @@ class GaussianProcessRegressor():
         
         parmsList = []
         for i in range(100):
-            I = np.random.choice(y.size, size_small, replace=False)
+            I = np.random.choice(y.size, SMALL_SIZE , replace=False)
             I = np.sort(I)
             yI = y[I]
 
-            #yre12 = scipy.signal.resample(y[:int(m)],size_small)
+            #yre12 = scipy.signal.resample(y[:int(m)],SMALL_SIZE )
 
 
 
             #p_est_12 = newModel.predict(yI.reshape(1,-1)).ravel()
             p_est_12 = get_parms_from_api(yI,"periodic")
 
-            p_est_12[-1] =p_est_12[-1]*size_small/y.size
+            p_est_12[-1] =p_est_12[-1]*SMALL_SIZE /y.size
 
             parmsList.append(p_est_12)
 
@@ -680,9 +684,9 @@ class GaussianProcessRegressor():
             return self.periodicFitBySplit()
             
             
-        while int(n*p)>=size_small:
+        while int(n*p)>=SMALL_SIZE:
             m = n*p
-            yre12 = scipy.signal.resample(y[:int(m)],size_small)
+            yre12 = scipy.signal.resample(y[:int(m)],SMALL_SIZE )
             p_est_12 = get_parms_from_api(yre12,"periodic")
 
             #p_est_12 = newModel.predict(yre12.reshape(1,-1)).ravel()
@@ -823,7 +827,7 @@ class GaussianProcessRegressor():
         #self.set_hyperparameters(hyp_dict)
 
 
-
+    
 
 
 
@@ -917,6 +921,9 @@ class GaussianProcessRegressor():
             elif method == "regular":
                 self.periodicFitByRegular()
 
+            #elif method == "search":
+            #    self.periodicFitBySearch()
+
             else:
                 raise ValueError("Error: '{}' unknown method name.".format(method))
 
@@ -944,18 +951,18 @@ class GaussianProcessRegressor():
             # self._kernel, self.model = self.kernel_choice(kernel = kernel)
 
             if self._kernel.__class__.__name__ == "Linear":
-                x_interp = np.linspace(-3, 3, size_large)
-                #x_interp = np.linspace(x1[0], x1[-1], size_large)
+                x_interp = np.linspace(-3, 3, LARGE_SIZE )
+                #x_interp = np.linspace(x1[0], x1[-1], LARGE_SIZE )
             elif self._kernel.__class__.__name__ == "Polynomial":
-                x_interp = np.linspace(-3, 3, size_small)
+                x_interp = np.linspace(-3, 3, SMALL_SIZE )
 
             # elif self._kernel.__class__.__name__ in ["Cosine","Exponential"]:
-            #     x_interp = np.linspace(-3, 3, size_small)
+            #     x_interp = np.linspace(-3, 3, SMALL_SIZE )
 
 
 
             else:
-                x_interp = np.linspace(-3, 3, size_large)
+                x_interp = np.linspace(-3, 3, LARGE_SIZE )
 
             
             xtrain_transform, a, b = self.line_transform(xtrain.reshape(-1, 1))
@@ -1302,7 +1309,7 @@ class GaussianProcessRegressor():
         if  sparse:
             try:
                 if sparse_size is None:
-                    sparse_size = max(size_large,int(.2*x_train.size))
+                    sparse_size = max(LARGE_SIZE ,int(.2*x_train.size))
                 Index = np.random.choice(y_train.size, sparse_size, replace=False)
                 xtrain = x_train
                 Index = np.sort(Index.ravel(), axis=None)
