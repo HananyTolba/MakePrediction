@@ -2,8 +2,8 @@ import pytest
 import numpy as np
 from numpy.testing import assert_almost_equal
 
-from gpasdnn.invtools import fast_pd_inverse as pdinv
-from gpasdnn.invtools import inv_col_add_update, inv_col_pop_update
+from makeprediction.invtools import fast_pd_inverse as pdinv
+from makeprediction.invtools import inv_col_add_update, inv_col_pop_update
 
 ########################################################
 A = np.random.RandomState(314).normal(0, 1, (5,5))

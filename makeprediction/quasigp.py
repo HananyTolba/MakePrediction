@@ -19,8 +19,8 @@ import pandas as pd
 import itertools
 
 
-from gpasdnn.kernels import *
-from gpasdnn.gp import GaussianProcessRegressor as GPR
+from makeprediction.kernels import *
+from makeprediction.gp import GaussianProcessRegressor as GPR
 import numpy as np
 from copy import copy
 
@@ -77,6 +77,8 @@ class QuasiGPR():
                 plt.plot(self._xtest,self._ypred,'b',lw=2,label="Prediction")
                 plt.plot(self._xtrain,self._yfit,'r',lw=2,label="Model")
                 plt.fill_between(self._xtest, (self._ypred - 1.96*self._std_ypred), (self._ypred + 1.96*self._std_ypred),color="b", alpha=0.2,label='Confidence Interval 95%')
+                plt.fill_between(self._xtrain, (self._yfit - 1.96* self._std_yfit), (self._yfit + 1.96* self._std_yfit),color="b", alpha=0.2,label='Confidence Interval 95%')
+
                 plt.legend()
                 plt.show()
             else:

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from gpasdnn.kernels import *
-from gpasdnn.kernels import KernelSum, KernelProduct
+from makeprediction.kernels import *
+from makeprediction.kernels import KernelSum, KernelProduct
 
 import pytest
 import numpy as np

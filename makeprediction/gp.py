@@ -22,11 +22,11 @@ import copy
 import joblib 
 
 
-from gpasdnn.invtools import fast_pd_inverse as pdinv
-from gpasdnn.invtools import inv_col_add_update, inv_col_pop_update
-import gpasdnn.kernels as kernels
-from gpasdnn.kernels import *
-#####from gpasdnn.kernels import date2num
+from makeprediction.invtools import fast_pd_inverse as pdinv
+from makeprediction.invtools import inv_col_add_update, inv_col_pop_update
+import makeprediction.kernels as kernels
+from makeprediction.kernels import *
+#####from makeprediction.kernels import date2num
 
 import inspect
 import pandas as pd
@@ -181,7 +181,7 @@ def get_parms_from_api(y,kernel=None):
 # path = sysconfig.get_paths()["purelib"]
 
 
-# path = os.path.join(path,'gpasdnn/SavedModels')
+# path = os.path.join(path,'makeprediction/SavedModels')
 
 
 
@@ -205,7 +205,7 @@ class_names = ['Linear', 'Linear + Periodic', 'Periodic', 'Polynomial',
 
 
 #path_predict_model = path + '/predict_gpr_model'
-#model_expression = keras.models.load_model("/Users/tolba/Desktop/gpasdnn/keras_LARGE_SIZE /predict_gpr_model")
+#model_expression = keras.models.load_model("/Users/tolba/Desktop/makeprediction/keras_LARGE_SIZE /predict_gpr_model")
 
 #model_expression = load_model(path_predict_model)
 #probability_model = tf.keras.Sequential([model_expression, tf.keras.layers.Softmax()])
@@ -242,7 +242,7 @@ class_names = ['Linear', 'Linear + Periodic', 'Periodic', 'Polynomial',
 
 # Kernel_names = list(map(lambda x: x.__class__.__name__.lower(),
 # Kernels_class))
-import gpasdnn.kernels as kernels_module
+import makeprediction.kernels as kernels_module
 Kernels = inspect.getmembers(kernels_module, inspect.isclass)
 Kernels_class_instances = [m[1]() for m in Kernels]
 Kernels_class_names = [m[0].lower() for m in Kernels]
@@ -298,8 +298,8 @@ class GaussianProcessRegressor():
 
     Examples:
     ===============
-            >>> from gpasdnn.gp import GaussianProcessRegressor as GPR
-            >>> from gpasdnn.kernels import RBF, Periodic
+            >>> from makeprediction.gp import GaussianProcessRegressor as GPR
+            >>> from makeprediction.kernels import RBF, Periodic
             >>> import matplotlib.pyplot as plt
             >>> import numpy as np
             >>> import time
@@ -1433,8 +1433,8 @@ class GaussianProcessRegressor():
 
 
 if __name__ == "__main__":
-    from gpasdnn.kernels import *
-    from gpasdnn.gp import GaussianProcessRegressor as GP
+    from makeprediction.kernels import *
+    from makeprediction.gp import GaussianProcessRegressor as GP
     import numpy as np
     import matplotlib.pyplot as plt
     from tqdm import tqdm
