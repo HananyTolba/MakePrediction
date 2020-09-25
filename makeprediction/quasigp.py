@@ -21,7 +21,9 @@ import itertools
 
 from makeprediction.kernels import *
 from makeprediction.gp import GaussianProcessRegressor as GPR
+from makeprediction.gp import get_parms_from_api
 import numpy as np
+import scipy
 from copy import copy
 
 from tqdm import tqdm
@@ -33,6 +35,33 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 colorama.init()
 
+
+import makeprediction.kernels as kernels_module
+import inspect
+Kernels = inspect.getmembers(kernels_module, inspect.isclass)
+Kernels_class_instances = [m[1]() for m in Kernels]
+Kernels_class_names = [m[0].lower() for m in Kernels]
+Kernels_class_names
+
+
+SMALL_SIZE = 300
+LARGE_SIZE = 600
+
+class_names = ['Linear', 'Linear + Periodic', 'Periodic', 'Polynomial',
+       'Polynomial + Periodic', 'Polynomial + Periodic + Stationary',
+       'Polynomial + Stationary', 'Stationary', 'Stationary + Linear + Periodic',
+       'Stationary + Periodic']
+
+
+class_names_new = ['Linear',
+ 'Periodic',
+ 'RBF',
+ 'Periodic + Linear',
+ 'Periodic + Linear + RBF',
+ 'Periodic + RBF',
+ ]
+
+
 class QuasiGPR():
     '''
     This class implements the quasi GaussianProcessRegressor approach
@@ -40,10 +69,11 @@ class QuasiGPR():
     of several GaussianProcesses.
     '''
 
-    def __init__(self,xtrain=None,ytrain=None,kernel = RBF(), yfit = None,std_yfit=None, modelList = None, components=None
+    def __init__(self,xtrain=None,ytrain=None,kernel = None, yfit = None,std_yfit=None, modelList = None, components=None
         ,xtest=None,ypred=None,std_ypred=None):
         self._xtrain = xtrain
         self._ytrain = ytrain
+
         self._kernel = kernel
         self._modelList = modelList #if self._kernel.__class__.__name__!='KernelSum' else \
                             #[GPR().choice(ker) for ker in self._kernel.recursive_str_list()]
@@ -56,6 +86,89 @@ class QuasiGPR():
         self._std_ypred = std_ypred
 
 
+    def get_kernel(self):
+        return self._kernel
+
+    def set_kernel(self,kernel_exp):
+        if isinstance(kernel_exp,str):
+            kernel_exp_list = kernel_exp.split('+')
+            kernel_exp_list = [ker.replace(" ","").lower() for ker in kernel_exp_list]
+            if all([ker in Kernels_class_names for ker in kernel_exp_list]):
+                kernel_sum_list = []
+                for ker in kernel_exp_list:
+                    location = Kernels_class_names.index(ker)
+                    kernel_sum_list.append(Kernels_class_instances[location])
+            else:
+                raise ValueError("The kernel must be a sum of kernels or a simple kernel.")
+
+            kernel_sum = sum(kernel_sum_list)
+            self._kernel = kernel_sum 
+        elif kernel_exp.__class__.__name__.lower() in Kernels_class_names:
+            kernel_sum = kernel_exp
+            self._kernel = kernel_sum
+
+        else:
+            raise ValueError("The kernel {} is not valid.".format(kernel_exp))
+
+    
+    def kernel_predict(self,result = None):
+    
+        ytrain = self._ytrain
+        #ytrain = (ytrain - ytrain.mean())/ytrain.std()
+        y_resample= scipy.signal.resample(ytrain,SMALL_SIZE)
+        #y_resample = (y_resample - y_resample.mean())/y_resample.std()
+        prob_predictions = get_parms_from_api(y_resample,"model_expression_predict")
+        #prob_predictions = probability_model.predict(y_resample.reshape(1,-1))
+        prob_predictions = prob_predictions.ravel()
+        pred_test = np.argmax(prob_predictions)
+        class_ = class_names[pred_test]
+        res = dict(zip(class_names, prob_predictions.tolist())) 
+        df = pd.DataFrame.from_dict(res,orient='index',columns=["Probability"])
+        df = df.round(4)
+        df.sort_values(by=['Probability'], inplace=True,ascending=False)
+        
+        if result is None:
+            return class_
+        elif result == "dict":
+            return class_, res
+        elif result == "df":
+            return class_, df
+
+        
+    def kernel_predict_new(self,result = None):
+    
+        ytrain = self._ytrain
+        #ytrain = (ytrain - ytrain.mean())/ytrain.std()
+        #if ytrain.size < LARGE_SIZE:
+        y_resample= scipy.signal.resample(ytrain,SMALL_SIZE)
+        prob_predictions = get_parms_from_api(y_resample,"gp_kernel_predict_300")
+
+        #else:
+        #    y_resample= scipy.signal.resample(ytrain,SMALL_SIZE)
+         #   prob_predictions = get_parms_from_api(y_resample,"gp_kernel_predict_300")
+
+
+
+        #y_resample = (y_resample - y_resample.mean())/y_resample.std()
+        #prob_predictions = probability_model.predict(y_resample.reshape(1,-1))
+        prob_predictions = prob_predictions.ravel()
+        pred_test = np.argmax(prob_predictions)
+        class_ = class_names_new[pred_test]
+        res = dict(zip(class_names_new, prob_predictions.tolist())) 
+        df = pd.DataFrame.from_dict(res,orient='index',columns=["Probability"])
+        df = df.round(4)
+        df.sort_values(by=['Probability'], inplace=True,ascending=False)
+        
+        if result is None:
+            return class_
+        elif result == "dict":
+            return class_, res
+        elif result == "df":
+            return class_, df
+    
+
+    
+
 
 
 
@@ -63,7 +176,7 @@ class QuasiGPR():
         if prediction is None:
             prediction =False
         if ci is None:
-            ci = True
+            ci = False
 
         test_None = all(elem is not None for elem in [xtest,ytest])
 
@@ -117,6 +230,13 @@ class QuasiGPR():
                 ax[i].plot(self.components[i],'b')
                 ax[i].set_title("The {}-th component ({})".format(i,kernel_list[i]))
             plt.show()
+
+
+
+
+
+
+
 
     def score(self,ytest = None):
         if ytest is None:
@@ -235,6 +355,31 @@ class QuasiGPR():
     def fit(self,method=None):
         xtrain = self._xtrain
         ytrain = self._ytrain
+
+        dictio = {'Stationary':3 ,"Linear":1 ,"Polynomial":0, "Periodic":2}
+        #dictio = {'RBF':3 ,"Linear":1 , "Periodic":2}
+
+        if self._kernel is None:
+            #kernel_predict = self.kernel_predict_new()
+            kernel_predict = self.kernel_predict()
+
+            #kernel_predict = kernel_predict.replace("RBF","Stationary")
+
+            phrase = kernel_predict
+
+
+
+            b_dict = dict((k, dictio[k]) for k in phrase.split(" + "))
+            sort_orders = sorted(b_dict.keys(), key=lambda x: x[0], reverse=False)
+            sort_orders = " + ".join(sort_orders)
+
+
+            kernel_predict = sort_orders.replace("Stationary","Matern32")
+            #kernel_predict = sort_orders.replace("RBF","Matern32")
+
+
+            self.set_kernel(kernel_predict)
+
         kernel_expr = self._kernel
         #models = []
         if isinstance(method, list):

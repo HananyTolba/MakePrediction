@@ -93,12 +93,17 @@ import requests
 SMALL_SIZE  = 300
 LARGE_SIZE  = 600
 
-Ports = list(range(8501,8509))
+Ports = list(range(8501,8511))
 kernels = ["rbf_1d","matern12_1d","matern32_1d","matern52_1d",
           "linear_1d",
           "polynomial_1d",
           "periodic_1d",
           "iid_periodic_300",
+          "model_expression_predict",
+          "gp_kernel_predict_300",
+          #"gp_kernel_predict_600",
+          
+
           ]
 PORTS = dict(zip(kernels,Ports))
 
@@ -902,7 +907,7 @@ class GaussianProcessRegressor():
 
         if self._kernel.__class__.__name__ == "Periodic":
             if method is None:
-                self.periodicFitBySplit()
+                self.periodicFitByResampling()
             elif method == "resample":
                 self.periodicFitByResampling()
             elif method == "split":
