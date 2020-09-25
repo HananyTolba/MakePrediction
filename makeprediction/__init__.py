@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 
 
-from gpasdnn import kernels
-from gpasdnn import gp
-from gpasdnn import invtools
+from makeprediction import kernels
+from makeprediction import gp
+from makeprediction import invtools
 
-from gpasdnn import version 
+from makeprediction import version 
 
-__all__ = ["gp","kernels","invtools","gpnew","quasigp"]
+__all__ = ["gp","kernels","invtools","quasigp",
+]
 
 
 __author__ = version.__author__
