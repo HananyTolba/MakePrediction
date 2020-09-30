@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import importlib
 import copy
 import joblib 
+from makeprediction.thread_api import thread_fit, thread_interfit
 
 
 from makeprediction.invtools import fast_pd_inverse as pdinv
@@ -41,7 +42,7 @@ from sklearn.linear_model import LinearRegression
 #from sklearn.metrics import r2_score
 import numpy as np
 #from numpy import loadtxt
-import tensorflow as tf
+#import tensorflow as tf
 #from tensorflow.keras.models import load_model
 
 # tf mp
@@ -93,7 +94,7 @@ import requests
 SMALL_SIZE  = 300
 LARGE_SIZE  = 600
 
-Ports = list(range(8501,8511))
+Ports = list(range(8501,8512))
 kernels = ["rbf_1d","matern12_1d","matern32_1d","matern52_1d",
           "linear_1d",
           "polynomial_1d",
@@ -101,7 +102,7 @@ kernels = ["rbf_1d","matern12_1d","matern32_1d","matern52_1d",
           "iid_periodic_300",
           "model_expression_predict",
           "gp_kernel_predict_300",
-          #"gp_kernel_predict_600",
+          "gp_kernel_predict_simple_300",
           
 
           ]
@@ -848,12 +849,16 @@ class GaussianProcessRegressor():
 
         L = list()
         m = 100
+        iteration = 0
+
         for i in range(m):
             r = int((i+1)/m*x.size)
             if r>=100:
                 L.append(self.p_fit(np.linspace(-1,1,r),y[:r])[-1]*r/x.size)
+                iteration= iteration + 1
+
         periodEst = L[np.argmin(np.abs(np.diff(L)))]
-        
+        print("number of iteration is : ",iteration)
 
 
 
@@ -907,7 +912,17 @@ class GaussianProcessRegressor():
 
         if self._kernel.__class__.__name__ == "Periodic":
             if method is None:
-                self.periodicFitByResampling()
+                #if self._xtrain.size <= 300:
+                    #self.periodicFitByInterSplit()
+                #else:                   
+                #    self.periodicFitBySplit()
+                thread_fit(self)
+
+
+  
+            elif method == "inter":
+                thread_interfit(self)
+                #self.periodicFitBySplit()
             elif method == "resample":
                 self.periodicFitByResampling()
             elif method == "split":

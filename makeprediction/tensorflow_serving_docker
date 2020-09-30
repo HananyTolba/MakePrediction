@@ -19,6 +19,10 @@ docker run -t --rm -p 8501:8501 -v "$(pwd)/periodic_1d:/models/periodic_1d" -e M
 
 docker run -t --rm -p 8504:8501 -v "$(pwd)/rbf_1d:/models/rbf_1d" -e MODEL_NAME=rbf_1d tensorflow/serving &
 
+docker run -t --rm -p 8511:8501 -v "$(pwd)/gp_kernel_predict_300:/models/gp_kernel_predict_300" -e MODEL_NAME=gp_kernel_predict_300 tensorflow/serving &
+
+
+
 
 
 

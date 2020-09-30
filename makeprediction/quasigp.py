@@ -45,7 +45,7 @@ Kernels_class_names
 
 
 SMALL_SIZE = 300
-LARGE_SIZE = 600
+
 
 class_names = ['Linear', 'Linear + Periodic', 'Periodic', 'Polynomial',
        'Polynomial + Periodic', 'Polynomial + Periodic + Stationary',
@@ -60,7 +60,7 @@ class_names_new = ['Linear',
  'Periodic + Linear + RBF',
  'Periodic + RBF',
  ]
-
+simple_class = ['Linear', 'Matern12', 'Periodic', 'RBF', 'WN']
 
 class QuasiGPR():
     '''
@@ -135,26 +135,44 @@ class QuasiGPR():
             return class_, df
 
         
-    def kernel_predict_new(self,result = None):
+    def kernel_predict1(self,result = None):
     
         ytrain = self._ytrain
-        #ytrain = (ytrain - ytrain.mean())/ytrain.std()
-        #if ytrain.size < LARGE_SIZE:
+        ytrain = (ytrain - ytrain.mean())/ytrain.std()
         y_resample= scipy.signal.resample(ytrain,SMALL_SIZE)
-        prob_predictions = get_parms_from_api(y_resample,"gp_kernel_predict_300")
-
-        #else:
-        #    y_resample= scipy.signal.resample(ytrain,SMALL_SIZE)
-         #   prob_predictions = get_parms_from_api(y_resample,"gp_kernel_predict_300")
-
-
-
         #y_resample = (y_resample - y_resample.mean())/y_resample.std()
+        prob_predictions = get_parms_from_api(y_resample,"gp_kernel_predict_300")
         #prob_predictions = probability_model.predict(y_resample.reshape(1,-1))
         prob_predictions = prob_predictions.ravel()
+        #print(prob_predictions)
         pred_test = np.argmax(prob_predictions)
         class_ = class_names_new[pred_test]
         res = dict(zip(class_names_new, prob_predictions.tolist())) 
+        df = pd.DataFrame.from_dict(res,orient='index',columns=["Probability"])
+        df = df.round(4)
+        df.sort_values(by=['Probability'], inplace=True,ascending=False)
+        
+        if result is None:
+            return class_
+        elif result == "dict":
+            return class_, res
+        elif result == "df":
+            return class_, df
+
+
+    def simple_kernel_predict(self,result = None):
+    
+        ytrain = self._ytrain
+        ytrain = (ytrain - ytrain.mean())/ytrain.std()
+        y_resample= scipy.signal.resample(ytrain,SMALL_SIZE)
+        #y_resample = (y_resample - y_resample.mean())/y_resample.std()
+        prob_predictions = get_parms_from_api(y_resample,"gp_kernel_predict_simple_300")
+        #prob_predictions = probability_model.predict(y_resample.reshape(1,-1))
+        prob_predictions = prob_predictions.ravel()
+        #print(prob_predictions)
+        pred_test = np.argmax(prob_predictions)
+        class_ = simple_class[pred_test]
+        res = dict(zip(simple_class, prob_predictions.tolist())) 
         df = pd.DataFrame.from_dict(res,orient='index',columns=["Probability"])
         df = df.round(4)
         df.sort_values(by=['Probability'], inplace=True,ascending=False)
@@ -186,11 +204,12 @@ class QuasiGPR():
                 if test_None:
                     plt.plot(xtest,ytest,'ok',lw=1,label="Test data")
    
-                plt.plot(self._xtrain,self._ytrain,'k',lw=1,label="Train data")
+                plt.plot(self._xtrain,self._ytrain,'-.k',lw=1,label="Train data")
                 plt.plot(self._xtest,self._ypred,'b',lw=2,label="Prediction")
                 plt.plot(self._xtrain,self._yfit,'r',lw=2,label="Model")
                 plt.fill_between(self._xtest, (self._ypred - 1.96*self._std_ypred), (self._ypred + 1.96*self._std_ypred),color="b", alpha=0.2,label='Confidence Interval 95%')
-                plt.fill_between(self._xtrain, (self._yfit - 1.96* self._std_yfit), (self._yfit + 1.96* self._std_yfit),color="b", alpha=0.2,label='Confidence Interval 95%')
+                plt.fill_between(self._xtrain, (self._yfit - 1.96* self._std_yfit), (self._yfit + 1.96* self._std_yfit),color="b", alpha=0.2)
+                plt.grid()
 
                 plt.legend()
                 plt.show()
@@ -199,25 +218,29 @@ class QuasiGPR():
                 if test_None:
                     plt.plot(xtest,ytest,'ok',lw=1,label="Test data")
    
-                plt.plot(self._xtrain,self._ytrain,'k',lw=1,label="Training data")
+                plt.plot(self._xtrain,self._ytrain,'.-k',lw=1,label="Training data")
                 #plt.plot(self._xtest,self._ytest,'g',lw=3,label="test data")
                 plt.plot(self._xtest,self._ypred,'b',lw=2,label="Prediction")
                 plt.plot(self._xtrain,self._yfit,'r',lw=2,label="Model")
                 #plt.fill_between(self._xtest, (self._ypred - 1.96*stdpred), (self._ypred + 1.96*stdpred),color="b", alpha=0.2,label='Confidence Interval 95%')
                 plt.legend()
+                plt.grid()
+
                 plt.show()
 
         else:
             plt.figure(figsize=(12,5))
-            plt.plot(self._xtrain,self._ytrain,'k',lw=1,label="Training data")
+            plt.plot(self._xtrain,self._ytrain,'.-k',lw=1,label="Training data")
             if test_None:
                 plt.plot(xtest,ytest,'ok',lw=1,label="Test data")
    
             #plt.plot(xtest,(ytest),'g',lw=3,label="test data")
             #plt.plot(xs,(yp),'b',lw=2,label="Prediction")
             plt.plot(self._xtrain,self._yfit,'r',lw=2,label="Model")
-            plt.fill_between(self._xtrain, (self._yfit - 1.96* self._std_yfit), (self._yfit + 1.96* self._std_yfit),color="b", alpha=0.2,label='Confidence Interval 95%')
+            if ci:
+                plt.fill_between(self._xtrain, (self._yfit - 1.96* self._std_yfit), (self._yfit + 1.96* self._std_yfit),color="b", alpha=0.2,label='Confidence Interval 95%')
             plt.legend()
+            plt.grid()
             plt.show()
 
 
@@ -228,7 +251,7 @@ class QuasiGPR():
             fig,ax = plt.subplots(m,1,figsize=(10,10),sharex=True)
             for i in range(m):
                 ax[i].plot(self.components[i],'b')
-                ax[i].set_title("The {}-th component ({})".format(i,kernel_list[i]))
+                ax[i].set_title("The {}-th component ({})".format(i+1,kernel_list[i]))
             plt.show()
 
 
@@ -356,31 +379,27 @@ class QuasiGPR():
         xtrain = self._xtrain
         ytrain = self._ytrain
 
-        dictio = {'Stationary':3 ,"Linear":1 ,"Polynomial":0, "Periodic":2}
-        #dictio = {'RBF':3 ,"Linear":1 , "Periodic":2}
+        dictio = {'Stationary':3 ,"Linear":1 ,"Polynomial":0, "Periodic":2,"Matern12":4}
 
         if self._kernel is None:
-            #kernel_predict = self.kernel_predict_new()
             kernel_predict = self.kernel_predict()
-
-            #kernel_predict = kernel_predict.replace("RBF","Stationary")
-
             phrase = kernel_predict
+            #print(phrase)
+            phrase = phrase + " + Matern12"
+            #print(phrase)
 
 
-
-            b_dict = dict((k, dictio[k]) for k in phrase.split(" + "))
-            sort_orders = sorted(b_dict.keys(), key=lambda x: x[0], reverse=False)
-            sort_orders = " + ".join(sort_orders)
-
-
-            kernel_predict = sort_orders.replace("Stationary","Matern32")
-            #kernel_predict = sort_orders.replace("RBF","Matern32")
-
+            sort_dict = {k: v for k, v in sorted(dictio.items(), key=lambda item: item[1], reverse=False) if k in phrase.split(" + ")}
+            kernel_predict = " + ".join(list(sort_dict.keys()))
+            kernel_predict = kernel_predict.replace("Stationary","RBF")
+            print("The kernel '{}' is predicted as the best choice for this data.".format(kernel_predict))
 
             self.set_kernel(kernel_predict)
 
         kernel_expr = self._kernel
+
+        #ker_simple = self.simple_kernel_predict()
+        #print("ker_simple :" ,ker_simple)
         #models = []
         if isinstance(method, list):
             l = kernel_expr.recursive_str_list()
@@ -451,9 +470,12 @@ class QuasiGPR():
             self._modelList = model
 
         #return models
-    def predict(self, xt=None, yt=None, horizon=1,option=True, sparse = None, sparse_size=None, components=None):
+    def predict(self, xt=None, yt=None, horizon=1,option=True, sparse = None, sparse_size=None, components=None,return_value=False):
 
         self._xtest = xt
+
+        #if return_value is None:
+         #   return_value = False
 
         if xt is None:
             ypred_,std_ = self._yfit, self._std_yfit
@@ -488,9 +510,8 @@ class QuasiGPR():
 
         self._ypred = ypred_
         self._std_ypred = std_
-
-        if components:
-
-            return ypred_,std_, cmps
-        else:
-            return ypred_,std_
+        if return_value:
+            if components:
+                return ypred_,std_, cmps
+            else:
+                return ypred_,std_

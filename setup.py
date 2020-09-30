@@ -61,7 +61,7 @@ setup(
     keywords=[
         'Gaussian Process Regression',
         'Time series prediction',
-        'Tensorflow',
+        #'Tensorflow',
         'Deep Learning'],
     platforms= [],
     # Keywords that define your package best
@@ -71,9 +71,10 @@ setup(
         "tqdm",
         "termcolor",
         "scipy",
+        "requests",
         #"keras",
         "scikit_learn",
-        "tensorflow", #
+        #"tensorflow", #
         #"tensorflow==2.1.0", #
         "matplotlib",
         "pandas",
