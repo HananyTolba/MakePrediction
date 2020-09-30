@@ -49,7 +49,7 @@ def thread_fit(self):
 
     y = (y - y.mean())/std_y
 
-    min_p = 100/x.size
+    min_p = 50/x.size
     
     p = np.linspace(min_p,1,100)
     mm = y.size
@@ -171,6 +171,15 @@ def date2num(dt):
 
 
 
+def thread_intersplitfit(self):
+    x,y = self._xtrain, self._ytrain
+    x = date2num(x)
+    x_plus = np.linspace(x[0],  x[-1],int(x.size*5) )
+    y_plus = np.interp(x_plus, x, y)
+    self._xtrain, self._ytrain = x_plus, y_plus
+    thread_splitfit(self)
+
+    self._xtrain, self._ytrain = x, y
 
 
 
@@ -188,7 +197,7 @@ def thread_splitfit(self):
 
     y = (y - y.mean())/std_y
 
-    min_p = 100/x.size
+    min_p = 50/x.size
     
     p = np.linspace(min_p,1,100)
     mm = y.size
