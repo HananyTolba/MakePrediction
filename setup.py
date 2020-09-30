@@ -73,7 +73,7 @@ setup(
         "scipy",
         "requests",
         #"keras",
-        "scikit_learn",
+        #"scikit_learn",
         #"tensorflow", #
         #"tensorflow==2.1.0", #
         "matplotlib",

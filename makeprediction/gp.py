@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import importlib
 import copy
 import joblib 
-from makeprediction.thread_api import thread_fit, thread_interfit
+from makeprediction.thread_api import thread_fit, thread_interfit, thread_splitfit, thread_intersplitfit
 
 
 from makeprediction.invtools import fast_pd_inverse as pdinv
@@ -37,7 +37,7 @@ import glob
 import sys
 #import site
 from numpy.linalg import inv
-from sklearn.linear_model import LinearRegression
+#from sklearn.linear_model import LinearRegression
 #from sklearn.metrics import mean_squared_error as mse
 #from sklearn.metrics import r2_score
 import numpy as np
@@ -503,7 +503,7 @@ class GaussianProcessRegressor():
 
 
     #@staticmethod
-    def line_transform(self,Y):
+    def line_transform1(self,Y):
         '''
         This function transforms any line or segment [a, b] to segment [-3, 3] and
          then returns the parameters of the associated model.
@@ -525,7 +525,28 @@ class GaussianProcessRegressor():
         return res, float(modeleReg.intercept_), float(modeleReg.coef_)
 
 
-    
+    #@staticmethod
+    def line_transform(self,Y):
+        '''
+        This function transforms any line or segment [a, b] to segment [-3, 3] and
+         then returns the parameters of the associated model.
+        '''
+        names_cls = self._kernel.__class__.__name__
+        #Y = self._xtrain
+        if names_cls == "Periodic":
+            X = np.linspace(-1, 1, Y.size)
+        #elif names_cls == "ChangePointLinear":
+        #    X = np.linspace(0, 1, Y.size)
+
+        else:
+            X = np.linspace(-3, 3, Y.size)
+
+        #modeleReg = LinearRegression()
+        fit = np.polyfit(Y,X , 1)
+        #modeleReg.fit(Y, X)
+        res = fit[0]*Y + fit[1]
+        return res, fit[1], fit[0]
+
 
     
     @staticmethod
@@ -591,7 +612,8 @@ class GaussianProcessRegressor():
 #=================================================================
         x_interp = np.linspace(-1, 1, SMALL_SIZE )
 
-        x_transform, a, b = self.line_transform(x.reshape(-1, 1))
+        #x_transform, a, b = self.line_transform(x.reshape(-1, 1))
+        x_transform, a, b = self.line_transform(x)
 
         y_interp = np.interp(x_interp, x_transform, y)
         #print("shape_periodic : ",y_interp.shape)
@@ -919,9 +941,15 @@ class GaussianProcessRegressor():
                 thread_fit(self)
 
 
-  
+            elif method == "default":
+                thread_fit(self)
             elif method == "inter":
                 thread_interfit(self)
+            elif method == "s":
+                thread_splitfit(self)
+            elif method == "sinter":
+                thread_intersplitfit(self)
+
                 #self.periodicFitBySplit()
             elif method == "resample":
                 self.periodicFitByResampling()
@@ -985,7 +1013,8 @@ class GaussianProcessRegressor():
                 x_interp = np.linspace(-3, 3, LARGE_SIZE )
 
             
-            xtrain_transform, a, b = self.line_transform(xtrain.reshape(-1, 1))
+            #xtrain_transform, a, b = self.line_transform(xtrain.reshape(-1, 1))
+            xtrain_transform, a, b = self.line_transform(xtrain)
 
             y_interp = np.interp(x_interp, xtrain_transform, ytrain)
             #y_interp = y_interp.ravel()
@@ -1079,8 +1108,10 @@ class GaussianProcessRegressor():
 
         ytrain = (ytrain - meany) / stdy
 
-        xtrain_transform, a, b = self.line_transform(
-            xtrain.reshape(-1, 1))
+        #xtrain_transform, a, b = self.line_transform(
+        #    xtrain.reshape(-1, 1))
+
+        xtrain_transform, a, b = self.line_transform(xtrain)
 
         xtest_transform = b * xtest + a
 
@@ -1140,7 +1171,8 @@ class GaussianProcessRegressor():
 
             ytrain = (ytrain - meany) / stdy
 
-            xtrain_transform, a, b = self.line_transform(xtrain.reshape(-1, 1))
+            #xtrain_transform, a, b = self.line_transform(xtrain.reshape(-1, 1))
+            xtrain_transform, a, b = self.line_transform(xtrain)
 
             xtest_transform = b * xtest + a
 
@@ -1216,8 +1248,11 @@ class GaussianProcessRegressor():
         y_train = (y_train - meany) / stdy
         yt = (yt - meany) / stdy
 
-        xtrain_transform, a, b = self.line_transform(
-            x_train.reshape(-1, 1))
+        #xtrain_transform, a, b = self.line_transform(
+        #    x_train.reshape(-1, 1))
+
+        xtrain_transform, a, b = self.line_transform(x_train)
+
 
         xtest_transform = b * xt + a
         n = xt.size
@@ -1279,7 +1314,7 @@ class GaussianProcessRegressor():
             if fast:
                 invK = inv_col_add_update(invK, x, r + self._sigma_n**2)
                 if option is None:
-                    option = False
+                    option = True
                 if option:
                     xtrain_transform = xtrain_transform[1:]
                     if (i<n-1):

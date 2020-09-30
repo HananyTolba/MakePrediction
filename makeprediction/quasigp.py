@@ -31,7 +31,7 @@ from termcolor import *
 import colorama
 import joblib 
 import matplotlib.pyplot as plt
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+#from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 colorama.init()
 
@@ -61,6 +61,18 @@ class_names_new = ['Linear',
  'Periodic + RBF',
  ]
 simple_class = ['Linear', 'Matern12', 'Periodic', 'RBF', 'WN']
+
+
+def mean_squared_error(Y_true,Y_pred):
+    return np.square(np.subtract(Y_true,Y_pred)).mean() 
+
+def mean_absolute_error(Y_true,Y_pred):
+    return np.abs(np.subtract(Y_true,Y_pred)).mean() 
+
+def r2_score(Y_true,Y_pred):
+    return np.corrcoef(Y_true, Y_pred)[0, 1]**2 
+
+
 
 class QuasiGPR():
     '''
@@ -265,18 +277,24 @@ class QuasiGPR():
         if ytest is None:
             L_score = [mean_absolute_error(self._ytrain,self._yfit) ,
             mean_squared_error(self._ytrain,self._yfit) ,
-             r2_score(self._ytrain,self._yfit)]
+            r2_score(self._ytrain,self._yfit)]
             d = dict(zip(["MAE","MSE","R2"],L_score))
-
+            result= {"train_errors":d}
             
         else:
-            L_score = [mean_absolute_error(ytest,self._ypred) ,
+            L_score_1 = [mean_absolute_error(self._ytrain,self._yfit) ,
+            mean_squared_error(self._ytrain,self._yfit) ,
+            r2_score(self._ytrain,self._yfit)]
+            d1 = dict(zip(["MAE","MSE","R2"],L_score_1))
+
+            L_score_2 = [mean_absolute_error(ytest,self._ypred) ,
             mean_squared_error(ytest,self._ypred) ,
              r2_score(ytest,self._ypred)]
-            d = dict(zip(["MAE","MSE","R2"],L_score))
-            
+            d2 = dict(zip(["MAE","MSE","R2"],L_score_2))
+            result = {"train_errors":d1,"test_errors":d2 }
 
-        return d
+
+        return result
 
 
         
@@ -439,6 +457,9 @@ class QuasiGPR():
                 if "_model" in model.__dict__.keys():
                     model.__dict__.pop("_model")
                 list_models.append(model)
+                #print("step --> {} ...".format(model._kernel.label()))
+                #print("finished.")
+
                 yf,sig = model.predict()
                 comp.append(yf)
                 sig_list.append(sig)
@@ -491,13 +512,17 @@ class QuasiGPR():
                 yt_std_list = []
                 yt_pred_list = []
                 for mdl in models:
+                    print("step --> {} ...".format(mdl._kernel.label()))
+
                     yt_pred, yt_std = mdl.predict(xt,yt,horizon, option, sparse, sparse_size)
-                  
+
                     if yt is not None:
                         yt = yt - yt_pred[:-horizon]
 
                     yt_pred_list.append(yt_pred)
                     yt_std_list.append(yt_std)
+                    print("finished.")
+
     # Il faut absolument changer ce code car dans le cas où xt est None
     # La prédiction est dèja calculer lors de fit.                
                 #if xt is None:
