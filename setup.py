@@ -72,10 +72,7 @@ setup(
         "termcolor",
         "scipy",
         "requests",
-        #"keras",
-        #"scikit_learn",
-        #"tensorflow", #
-        #"tensorflow==2.1.0", #
+        "joblib",
         "matplotlib",
         "pandas",
         # only for the demo
