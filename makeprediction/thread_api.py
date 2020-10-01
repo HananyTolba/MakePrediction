@@ -30,9 +30,14 @@ import json
 import numpy as np
 from scipy.signal import resample
 
+from makeprediction.url import kernel2url
 
-URL = 'http://www.makeprediction.com/periodic/v1/models/periodic_1d:predict'
-URL_IID = 'http://makeprediction.com/iid/v1/models/iid_periodic_300:predict'
+
+# URL = 'http://www.makeprediction.com/periodic/v1/models/periodic_1d:predict'
+# URL_IID = 'http://makeprediction.com/iid/v1/models/iid_periodic_300:predict'
+
+
+(URL, URL_IID) = kernel2url("periodic")
 
 from collections import Counter
 
@@ -67,7 +72,7 @@ def thread_fit(self):
 
     y = (y - y.mean())/std_y
 
-    min_p = 50/x.size
+    min_p = 100/x.size
     
     p = np.linspace(min_p,1,100)
     mm = y.size
@@ -100,7 +105,7 @@ def thread_fit(self):
     result = []
 
 
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         with requests.Session() as session:
             result += executor.map(fetch, [session] * tt, [URL] * tt,data_list)
             executor.shutdown(wait=True)
@@ -215,9 +220,9 @@ def thread_splitfit(self):
 
     y = (y - y.mean())/std_y
 
-    min_p = 50/x.size
+    min_p = 100/x.size
     
-    p = np.linspace(min_p,1,100)
+    p = np.linspace(min_p,1,200)
     mm = y.size
     y_list = [y[:int(s*mm)] for s in p]
 
@@ -268,10 +273,10 @@ def thread_splitfit(self):
 
     result[:,1] = result[:,1]*np.array(nn)/mm
 
-    plt.plot(result[:,1])
-    plt.show()
+    # plt.plot(result[:,1])
+    # plt.show()
 
-    #print("most frequent : ", most_frequent(np.round(result[:,1].ravel(),2)))
+    # #print("most frequent : ", most_frequent(np.round(result[:,1].ravel(),2)))
 
 
     hyp = result[-1,:]
@@ -281,7 +286,7 @@ def thread_splitfit(self):
     else:
         hyp = result[-1,:]
         L = result[:,-1]
-        print("erreur : ",np.abs(np.diff(L)).min())
+        #print("erreur : ",np.abs(np.diff(L)).min())
         hyp[-1]  = L[np.argmin(np.abs(np.diff(L)))]
 
 

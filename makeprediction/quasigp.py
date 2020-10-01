@@ -214,9 +214,9 @@ class QuasiGPR():
             if ci:
                 plt.figure(figsize=(12,5))
                 if test_None:
-                    plt.plot(xtest,ytest,'ok',lw=1,label="Test data")
+                    plt.plot(xtest,ytest,'g',lw=2,label="Test data")
    
-                plt.plot(self._xtrain,self._ytrain,'-.k',lw=1,label="Train data")
+                plt.plot(self._xtrain,self._ytrain,'-.k',lw=2,label="Train data")
                 plt.plot(self._xtest,self._ypred,'b',lw=2,label="Prediction")
                 plt.plot(self._xtrain,self._yfit,'r',lw=2,label="Model")
                 plt.fill_between(self._xtest, (self._ypred - 1.96*self._std_ypred), (self._ypred + 1.96*self._std_ypred),color="b", alpha=0.2,label='Confidence Interval 95%')
@@ -228,9 +228,9 @@ class QuasiGPR():
             else:
                 plt.figure(figsize=(12,5))
                 if test_None:
-                    plt.plot(xtest,ytest,'ok',lw=1,label="Test data")
+                    plt.plot(xtest,ytest,'g',lw=2,label="Test data")
    
-                plt.plot(self._xtrain,self._ytrain,'.-k',lw=1,label="Training data")
+                plt.plot(self._xtrain,self._ytrain,'.-k',lw=2,label="Training data")
                 #plt.plot(self._xtest,self._ytest,'g',lw=3,label="test data")
                 plt.plot(self._xtest,self._ypred,'b',lw=2,label="Prediction")
                 plt.plot(self._xtrain,self._yfit,'r',lw=2,label="Model")
@@ -239,6 +239,7 @@ class QuasiGPR():
                 plt.grid()
 
                 plt.show()
+                
 
         else:
             plt.figure(figsize=(12,5))
@@ -262,7 +263,7 @@ class QuasiGPR():
         if m>1:
             fig,ax = plt.subplots(m,1,figsize=(10,10),sharex=True)
             for i in range(m):
-                ax[i].plot(self.components[i],'b')
+                ax[i].plot(self._xtrain,self.components[i],'b')
                 ax[i].set_title("The {}-th component ({})".format(i+1,kernel_list[i]))
             plt.show()
 

@@ -70,9 +70,9 @@ def date2num(dt):
         elif 1 in dt.shape:
             x = dt.ravel()
         else:
-            raise ValueError('The {} must be a one dimension numpy array'.format(dt))
+            raise ValueError('The {} must be a one dimension numpy array'.format(dt)) from None
     else:
-        raise TypeError('The {} must be a numpy vector or pandas DatetimeIndex'.format(dt))
+        raise TypeError('The {} must be a numpy vector or pandas DatetimeIndex'.format(dt)) from None
     return x
 
 # cprint('hello'.upper(), 'green')
