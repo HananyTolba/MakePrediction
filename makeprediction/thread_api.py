@@ -15,7 +15,9 @@
 # __status__ = "4 - Beta"
 
 
+import logging
 
+logging.basicConfig(level=logging.DEBUG)
 
 from concurrent.futures import ThreadPoolExecutor
 #from makeprediction.gp import date2num
@@ -72,21 +74,16 @@ def thread_fit(self):
 
     y = (y - y.mean())/std_y
 
-    min_p = 100/x.size
+    min_p = 50/x.size
     
-    p = np.linspace(min_p,1,100)
+    p = np.linspace(min_p,1,200)
     mm = y.size
     y_list = [y[:int(s*mm)] for s in p]
 
     y_list = [list(x) for x in set(tuple(x) for x in y_list)]
     y_list.sort(key=len)
 
-    # plt.plot(y_list[3],'o')
-    # plt.plot(y_list[20],'x')
-    # plt.plot(y_list[99])
-    # plt.show()
-    #y_list2 = [y[-int(s*mm):] for s in p]
-    #y_list = y_list1 + y_list2
+    
     nn = list(map(len,y_list))
 
     #print("nombre de listes :",len(nn))
@@ -105,7 +102,7 @@ def thread_fit(self):
     result = []
 
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         with requests.Session() as session:
             result += executor.map(fetch, [session] * tt, [URL] * tt,data_list)
             executor.shutdown(wait=True)
@@ -116,36 +113,28 @@ def thread_fit(self):
 
     result[:,1] = result[:,1]*np.array(nn)/mm
 
-    #plt.plot(result[:,1])
-    #plt.show()
-
-    #print("most frequent : ", most_frequent(np.round(result[:,1].ravel(),2)))
-
+    
 
     hyp = result[-1,:]
 
-    if result[-1,1]>=.99:
-        hyp = result[-1,:]
-    else:
-        hyp = result[-1,:]
-        L = result[:,-1]
-        #print("erreur : ",np.abs(np.diff(L)).min())
-        hyp[-1]  = L[np.argmin(np.abs(np.diff(L)))]
+    #if result[-1,1]>=.99:
+    #    hyp = result[-1,:]
+    #else:
+    hyp = result[-1,:]
+    L = result[:,-1]
+    #print("erreur : ",np.abs(np.diff(L)).min())
+    hyp[-1]  = L[np.argmin(np.abs(np.diff(L)))]
+    hyp[-1] = np.round( hyp[-1],2)
+    #print("First period",hyp[-1])
+    List = np.round(result[:,1],3).tolist()
+    period_est_= most_frequent(List)
 
-
-    #L = result[:,-1]
-    #hyp[-1]  = L[np.argmin(np.abs(np.diff(L)))]
-    #hyp[-1] = most_frequent(np.round(result[:,1].ravel(),2))
-
-    # if hyp[-1]<.01:
-    #     hyp[-1] = round(hyp[-1] ,4)
-    # elif hyp[-1]<.1:
-    #     hyp[-1] = round(hyp[-1] ,3)
-    # else:
-    #     hyp[-1] = round(hyp[-1] ,2)
+    #hyp[-1]  = period_est_
+    #print("Second period",period_est_,"number : ",List.count(period_est_))
 
 
 
+    
     hyp_dict = dict(zip(["length_scale","period"],hyp))
     hyp_dict["variance"] = std_y**2
 
@@ -218,11 +207,11 @@ def thread_splitfit(self):
 
     std_y = y.std()
 
-    y = (y - y.mean())/std_y
+   # y = (y - y.mean())/std_y
 
     min_p = 100/x.size
     
-    p = np.linspace(min_p,1,200)
+    p = np.linspace(min_p,1,100)
     mm = y.size
     y_list = [y[:int(s*mm)] for s in p]
 
@@ -248,9 +237,9 @@ def thread_splitfit(self):
         y_interp = np.interp(x_interp, x_transform, _)
         #print("shape_periodic : ",y_interp.shape)
         #period_est_ = get_parms_from_api(y_interp,self._kernel.label())
+        y_interp = (y_interp - y_interp.mean()) / y_interp.std() #---> new
 
         z = y_interp
-        z =  (z - z.mean())/z.std()
 
         data = {"inputs":z.reshape(1,-1).tolist()}
         data_list.append(data)
@@ -287,7 +276,7 @@ def thread_splitfit(self):
         hyp = result[-1,:]
         L = result[:,-1]
         #print("erreur : ",np.abs(np.diff(L)).min())
-        hyp[-1]  = L[np.argmin(np.abs(np.diff(L)))]
+        hyp[-1]  = np.round(L[np.argmin(np.abs(np.diff(L)))],3)
 
 
     #L = result[:,-1]
@@ -307,3 +296,10 @@ def thread_splitfit(self):
     hyp_dict["variance"] = std_y**2
 
     self.set_hyperparameters(hyp_dict)
+
+
+
+
+
+
+

@@ -49,7 +49,7 @@ setup(
     # Chose a license from here:
     # https://help.github.com/articles/licensing-a-repository
     license="GPLv3",
-    description="Fast and easy gaussian process regression using deep  neural networks’s with tensorflow",
+    description="Fast and easy gaussian process regression using deep neural networks’s",
     author=__author__, 
     #long_description = long_description,
     long_description=open('README.md').read(),

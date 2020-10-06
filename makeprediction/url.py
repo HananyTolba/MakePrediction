@@ -13,6 +13,9 @@
 
 
 import os
+import logging
+
+logging.basicConfig(level=logging.ERROR)
 
 URL = 'http://www.makeprediction.com/periodic/v1/models/periodic_1d:predict'
 URL_IID = 'http://makeprediction.com/iid/v1/models/iid_periodic_300:predict'

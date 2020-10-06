@@ -16,6 +16,12 @@
 
 '''This module is for Gaussian Process Regression simulation fitting and prediction.'''
 
+
+
+import logging
+logging.basicConfig(level=logging.ERROR)
+
+
 import matplotlib.pyplot as plt
 import importlib
 import copy
@@ -27,6 +33,9 @@ from makeprediction.invtools import fast_pd_inverse as pdinv
 from makeprediction.invtools import inv_col_add_update, inv_col_pop_update
 import makeprediction.kernels as kernels
 from makeprediction.kernels import *
+
+from makeprediction.url import kernel2url
+
 #####from makeprediction.kernels import date2num
 
 import inspect
@@ -54,12 +63,16 @@ import scipy.signal
 
 #from tensorflow.keras import backend as K
 from scipy import signal
-from tqdm import tqdm
 from scipy.signal import correlate
 from numpy import argmax, mean, diff, log, nonzero
-from termcolor import *
+#from termcolor import *
+from tqdm import tqdm
+
+from termcolor import cprint
+
 import colorama
-colorama.init()
+colorama.deinit()
+colorama.init(strip=False)
 
 def date2num(dt):
     if np.issubdtype(dt.dtype, np.datetime64):
@@ -109,31 +122,41 @@ kernels = ["rbf_1d","matern12_1d","matern32_1d","matern52_1d",
 PORTS = dict(zip(kernels,Ports))
 
 
+DomainName = "http://www.makeprediction.com"
 
 def get_parms_from_api(y,kernel=None):
     y = y.reshape(1,-1)
     data = {"inputs":y.tolist()}
     
-    if kernel is None:
-        if y.size == LARGE_SIZE:
-            kernel="rbf"
-        elif y.size== SMALL_SIZE:
-            kernel = "periodic"
+    # if kernel is None:
+    #     if y.size == LARGE_SIZE:
+    #         kernel="rbf"
+    #     elif y.size== SMALL_SIZE:
+    #         kernel = "periodic"
     
     
     try:
-        port = PORTS[kernel]
+        #port = PORTS[kernel]
+        url_ec2 = os.path.join(DomainName,kernel.lower() + "/v1/models/")
+        url_ec2 = os.path.join(url_ec2, kernel.lower() + ":predict")
+        r = requests.post(url_ec2, data=json.dumps(data))
+
     except:
         kernel = kernel.lower() + "_1d"
-        port = PORTS[kernel]
+        url_ec2 = os.path.join(DomainName,kernel.lower() + "/v1/models/")
+        url_ec2 = os.path.join(url_ec2, kernel.lower() + ":predict")
+        r = requests.post(url_ec2, data=json.dumps(data))
         
-    url_ec2 = "http://www.makeprediction.com:" + str(port) + "/v1/models/"
+    #url_ec2 = "http://www.makeprediction.com:" + str(port) + "/v1/models/"
+    #url_ec2 = os.path.join(DomainName,kernel.lower() + "/v1/models/")
+    #url_ec2 = os.path.join(url_ec2, kernel.lower() + ":predict")
 
-    url_ec2 = url_ec2 + kernel + ":predict"
     #print("requests :" ,url_ec2)
-    r = requests.post(url_ec2, data=json.dumps(data))
+    #r = requests.post(url_ec2, data=json.dumps(data))
     return np.array(r.json()["outputs"][0])
-    
+
+
+
 
 # def period_(y):
 #     n = y.size
@@ -502,6 +525,25 @@ class GaussianProcessRegressor():
         return joblib.load(path) 
 
 
+    def get_parms_from_apiREST(self,y):
+        ####y = self._ytrain
+        y = y.reshape(1,-1)
+        data = {"inputs":y.tolist()}
+        url_ec2 = kernel2url(self._kernel.label().lower())
+        res = []
+        try:
+            for url in url_ec2:
+                r = requests.post(url, data=json.dumps(data),timeout=1)
+                res.append(np.array(r.json()["outputs"][0]))
+        except: 
+            r = requests.post(url_ec2, data=json.dumps(data),timeout=1)
+            res = np.array(r.json()["outputs"][0])
+        return res
+
+
+    
+
+
     #@staticmethod
     def line_transform1(self,Y):
         '''
@@ -605,7 +647,7 @@ class GaussianProcessRegressor():
         #x,y = self._xtrain, self._ytrain
 
         ystd = y.std()
-        y = (y - y.mean()) / y.std()
+        #y = (y - y.mean()) / y.std()
 
         
         n = y.size
@@ -616,15 +658,17 @@ class GaussianProcessRegressor():
         x_transform, a, b = self.line_transform(x)
 
         y_interp = np.interp(x_interp, x_transform, y)
-        #print("shape_periodic : ",y_interp.shape)
-        period_est_ = get_parms_from_api(y_interp,self._kernel.label())
+        y_interp = (y_interp - y_interp.mean()) / y_interp.std() #---> new
 
+        #print("shape_periodic : ",y_interp.shape)
+        #period_est_ = get_parms_from_api(y_interp,self._kernel.label())
+        period_est_,noise_std = self.get_parms_from_apiREST(y_interp)
 
         #period_est_ = newModel.predict(y_interp.reshape(1,x_interp.size)) 
         #period_est_ = period_est_.ravel()
 
         #===============noise std===========
-        noise_std = get_parms_from_api(y_interp,"iid_periodic_300")
+        #noise_std = get_parms_from_api(y_interp,"iid_periodic_300")
         #noise_std = model_periodic_noise.predict(y_interp.reshape(1,x_interp.size))
         #noise_std = noise_std.ravel()
         self._sigma_n = noise_std[0]*ystd
@@ -700,13 +744,18 @@ class GaussianProcessRegressor():
         y = self._ytrain
         ystd = y.std()
         y = (y - y.mean()) / y.std()
+        yre = scipy.signal.resample(y,SMALL_SIZE )
+        yre = (yre - yre.mean()) / yre.std()
 
+        _,noise_std = self.get_parms_from_apiREST(yre)
+        noise_std = noise_std.ravel()
 
+        self._sigma_n = noise_std[0]*ystd
 
         n = y.size
         p=1
         parms = []
-        if (n<350):
+        if (n<100):
             print("The 'Split' method was automatically chosen because the data size is very small for the 'Resampling' method.")
 
             return self.periodicFitBySplit()
@@ -715,15 +764,18 @@ class GaussianProcessRegressor():
         while int(n*p)>=SMALL_SIZE:
             m = n*p
             yre12 = scipy.signal.resample(y[:int(m)],SMALL_SIZE )
-            p_est_12 = get_parms_from_api(yre12,"periodic")
+
+            yre12 = (yre12 - yre12.mean()) / yre12.std()
+
+            p_est_12,_ = self.get_parms_from_apiREST(yre12)
 
             #p_est_12 = newModel.predict(yre12.reshape(1,-1)).ravel()
             p_est_12[-1] =p_est_12[-1]*int(m)/y.size
             #noise_std = model_periodic_noise.predict(yre12.reshape(1,yre12.size))
-            noise_std = get_parms_from_api(yre12,"iid_periodic_300")
+            #noise_std = get_parms_from_api(yre12,"iid_periodic_300")
 
-            noise_std = noise_std.ravel()
-            self._sigma_n = noise_std[0]*ystd
+            #noise_std = noise_std.ravel()
+            #self._sigma_n = noise_std[0]*ystd
 
 
             if ((p==1)&(p_est_12[-1]>.95)):
@@ -753,6 +805,7 @@ class GaussianProcessRegressor():
             period_est___ = most_frequent(List)
             #print("Estimated period is: ",period_est___)
             
+         
             Est = parms[0,:]
             #Est[-1] = periodEst
             Est[-1] = period_est___
@@ -880,7 +933,7 @@ class GaussianProcessRegressor():
                 iteration= iteration + 1
 
         periodEst = L[np.argmin(np.abs(np.diff(L)))]
-        print("number of iteration is : ",iteration)
+        #print("number of iteration is : ",iteration)
 
 
 
@@ -1017,6 +1070,9 @@ class GaussianProcessRegressor():
             xtrain_transform, a, b = self.line_transform(xtrain)
 
             y_interp = np.interp(x_interp, xtrain_transform, ytrain)
+            #y_interp = signal.resample(ytrain,LARGE_SIZE)
+            y_interp = (y_interp - y_interp.mean())/y_interp.std() #---> new
+           
             #y_interp = y_interp.ravel()
 
             #try:
@@ -1025,7 +1081,8 @@ class GaussianProcessRegressor():
             #parmsfit_by_sampling = self._model.predict(y_interp.reshape(1,y_interp.size))
             
 
-            parmsfit_by_sampling = get_parms_from_api(y_interp,self._kernel.label())
+            #parmsfit_by_sampling = get_parms_from_api(y_interp,self._kernel.label())
+            parmsfit_by_sampling = self.get_parms_from_apiREST(y_interp)
 
 
             # try:
@@ -1142,7 +1199,7 @@ class GaussianProcessRegressor():
 
         ypred = (stdy * y_pred_test + meany)
 
-        std_pred_test = np.sqrt(std_pred_test.diagonal())
+        std_pred_test = np.sqrt(np.abs(std_pred_test.diagonal()))
 
         return ypred, std_pred_test
 

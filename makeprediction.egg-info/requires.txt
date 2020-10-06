@@ -1,0 +1,9 @@
+numpy<1.19.0,>=1.16.0
+colorama
+tqdm
+termcolor
+scipy
+requests
+joblib
+matplotlib
+pandas

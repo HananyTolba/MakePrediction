@@ -13,7 +13,9 @@
 # __status__ = "4 - Beta"
 
 
+import logging
 
+logging.basicConfig(level=logging.ERROR)
 
 import pandas as pd 
 import itertools
@@ -64,12 +66,19 @@ simple_class = ['Linear', 'Matern12', 'Periodic', 'RBF', 'WN']
 
 
 def mean_squared_error(Y_true,Y_pred):
+    Y_true = Y_true.ravel()
+    Y_pred = Y_pred.ravel()
+
     return np.square(np.subtract(Y_true,Y_pred)).mean() 
 
 def mean_absolute_error(Y_true,Y_pred):
+    Y_true = Y_true.ravel()
+    Y_pred = Y_pred.ravel()
     return np.abs(np.subtract(Y_true,Y_pred)).mean() 
 
 def r2_score(Y_true,Y_pred):
+    Y_true = Y_true.ravel()
+    Y_pred = Y_pred.ravel()
     return np.corrcoef(Y_true, Y_pred)[0, 1]**2 
 
 
@@ -239,7 +248,7 @@ class QuasiGPR():
                 plt.grid()
 
                 plt.show()
-                
+
 
         else:
             plt.figure(figsize=(12,5))
@@ -411,7 +420,7 @@ class QuasiGPR():
             sort_dict = {k: v for k, v in sorted(dictio.items(), key=lambda item: item[1], reverse=False) if k in phrase.split(" + ")}
             kernel_predict = " + ".join(list(sort_dict.keys()))
             kernel_predict = kernel_predict.replace("Stationary","RBF")
-            print("The kernel '{}' is predicted as the best choice for this data.".format(kernel_predict))
+            #print("The kernel '{}' is predicted as the best choice for this data.".format(kernel_predict))
 
             self.set_kernel(kernel_predict)
 
@@ -468,6 +477,8 @@ class QuasiGPR():
                 #plt.plot(yf,'r')
                 ytrain = ytrain - yf
 
+
+
                 
                 #plt.plot(ytrain)
                 #model._ytrain = ytrain
@@ -513,8 +524,8 @@ class QuasiGPR():
                 yt_std_list = []
                 yt_pred_list = []
                 for mdl in models:
-                    print("step --> {} ...".format(mdl._kernel.label()))
-
+                    #print("step --> {} ...".format(mdl._kernel.label()))
+                    
                     yt_pred, yt_std = mdl.predict(xt,yt,horizon, option, sparse, sparse_size)
 
                     if yt is not None:
@@ -522,7 +533,7 @@ class QuasiGPR():
 
                     yt_pred_list.append(yt_pred)
                     yt_std_list.append(yt_std)
-                    print("finished.")
+                    #print("finished.")
 
     # Il faut absolument changer ce code car dans le cas où xt est None
     # La prédiction est dèja calculer lors de fit.                

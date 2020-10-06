@@ -3,10 +3,10 @@
  -->
 
 
-makeprediction is a package for building Gaussian process models in Python, using TensorFlow (http://www.tensorflow.org).
+MakePrediction is a package for building Gaussian process models in Python.
 It was originally created by [Hanany Tolba].
  
- * makeprediction is an open source project. If you have relevant skills and are interested in contributing then please do contact us (hananytolba@yahoo.com).*
+ * MakePrediction is an open source project. If you have relevant skills and are interested in contributing then please do contact us (hananytolba@yahoo.com).*
 
 Gaussian process regression (GPR):
 =====================================
@@ -27,8 +27,10 @@ the *sparse* context and the automatic online update of prediction.
 
 ## What does makeprediction do?
 
-* Time series prediction (forecasting).
+* Automatic time-series prediction (forecasting) using Gaussian processes model.
 * Modelling and analysis time series.
+
+### Applications:
 * Stock price prediction.
 * Stock market prediction.
 
@@ -40,6 +42,6 @@ the *sparse* context and the automatic online update of prediction.
 
 *Be aware that the `master` branch may change regularly, and new commits may break your code.*
 
-[makeprediction GitHub repository](https://github.com/HananyTolba/Gaussian-process-as-deep-neural-network.git), run:
+[MakePrediction GitHub repository](https://github.com/HananyTolba/Gaussian-process-as-deep-neural-network.git), run:
 * pip install .
 
