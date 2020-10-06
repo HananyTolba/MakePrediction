@@ -248,7 +248,7 @@ class Kernel:
     #         r = self.__class__.__name__
     #     return r
 
-    @staticmethod
+    #@staticmethod
     def square_root_matrix(self,K: "numpy array") -> "numpy array":
 
         if self.__class__.__name__ == "Constant":
@@ -279,9 +279,29 @@ class Kernel:
             raise TypeError('The {} must be a numpy vector or pandas DatetimeIndex'.format(dt))
         return x
 
-    
+    def simulate(self, dt: "np.ndarray or pd.DatetimeIndex " = None,seed=None) ->  "np.ndarray":
+        '''
+         This method allows the simulation of a Gaussian process (1d) on a domain x.
+        '''
+        x = self.date2num(dt)
 
-       
+        #x = x.ravel()
+        m = x.size
+
+        K = self.count(x)
+
+        Q = self.square_root_matrix(K)
+
+
+        if seed is None:
+            iid = np.random.randn(m)
+        else:
+            seed = seed
+            iid = np.random.randn(m)
+
+
+        y = Q @ iid
+        return y 
 
 
 
@@ -289,14 +309,331 @@ class Kernel:
 
 
 
-    
+    def simulate2d(self,x1: "numpy vector",x2: "numpy vector" =None,hyperparameters:dict = None, seed=None) -> "numpy array":
+        '''
+         This method allows the simulation of a 2d separable Gaussian process  on a domain D in R^2.
+        '''
         
-
+        x1 = x1.ravel()
+        m1 = x1.size
 
 
 
 
         
+        if hyperparameters is None:
+            
+            if x2 is None:
+                K1 = self.count(x1)
+                Q1 = self.square_root_matrix(K1)
+                iid = np.random.randn(m1,m1)
+                y = Q1 @ iid @ Q1.T
+            else:
+                x2 = x2.ravel()
+                m2 = x2.size
+                K1 = self.count(x1)
+                Q1 = self.square_root_matrix(K1)
+                K2 = self.count(x2)
+                Q2 = self.square_root_matrix(K2)
+                iid = np.random.randn(m1,m2)
+                y = Q1 @ iid @ Q2.T
+        # elif isinstance(hyperparameters,dict):
+        #     if len(hyperparameters)==1:
+        #         hyperparameters = [hyperparameters]
+        #     else:
+        #         raise TypeError("In the 'simulate_2d' method, the hyperparameters must be a list or dict of size one.")
+
+
+
+
+
+        elif isinstance(hyperparameters,list):
+
+
+            if len(hyperparameters)==1:
+                #if isinstance(hyperparameters,dict):
+                #    self.set_hyperparameters(hyperparameters)
+                #else:
+                #    self.set_hyperparameters(hyperparameters[0])
+
+                self.set_hyperparameters(hyperparameters[0])
+
+                if x2 is None:
+                    K1 = self.count(x1)
+                    Q1 = self.square_root_matrix(K1)
+                    iid = np.random.randn(m1,m1)
+                    y = Q1 @ iid @ Q1.T
+                else:
+                    x2 = x2.ravel()
+                    m2 = x2.size
+                    K1 = self.count(x1)
+                    Q1 = self.square_root_matrix(K1)
+                    K2 = self.count(x2)
+                    Q2 = self.square_root_matrix(K2)
+                    iid = np.random.randn(m1,m2)
+                    y = Q1 @ iid @ Q2.T
+            elif len(hyperparameters)==2:
+                self.set_hyperparameters(hyperparameters[0])
+                if x2 is None:
+                    K1 = self.count(x1)
+                    Q1 = self.square_root_matrix(K1)
+                    self.set_hyperparameters(hyperparameters[1])
+                    K2 = self.count(x1)
+                    Q2 = self.square_root_matrix(K2)
+                    iid = np.random.randn(m1,m1)
+                    y = Q1 @ iid @ Q2.T
+                else:
+                    
+                    x2 = x2.ravel()
+                    m2 = x2.size
+                    K1 = self.count(x1)
+                    Q1 = self.square_root_matrix(K1)
+                    self.set_hyperparameters(hyperparameters[1])
+                    K2 = self.count(x2)
+                    Q2 = self.square_root_matrix(K2)
+                    iid = np.random.randn(m1,m2)
+                    y = Q1 @ iid @ Q2.T
+            else:
+                raise ValueError("In the 'simulate_2d' method, the hyperparameters must be a list of maximum size of 2.")
+
+
+        else:
+            raise TypeError("In the 'simulate_2d' method, the hyperparameters must be a list.")
+            
+        return y 
+
+    def simulate3d(self,space:  "list of numpy vectors",time: "numpy vector" = None,space_kernel: "kernel instance" =None,time_kernel:"kernel instance" = None,time_hyperparameters:dict = None,space_hyperparameters: dict = None) -> "numpy array":
+        '''
+        This method allows the simulation of a 3d separable Gaussian process or a spatiotemporal gaussian process on a domain D in R^3.
+
+        '''
+        if time_kernel is None:
+            time_kernel = self
+
+        if space_kernel is None:
+            space_kernel = self 
+
+        if time is None:
+            time = space
+
+        #t = x
+        if isinstance(space,list):
+            GP_st = [space_kernel.simulate2d(*space,hyperparameters=space_hyperparameters).ravel() for i in range(time.size)]
+        else:
+            GP_st = [space_kernel.simulate2d(space,hyperparameters=space_hyperparameters).ravel() for i in range(time.size)]
+
+        GP_st = np.array(GP_st).T
+        #time_kernel = Periodic() + RBF()
+        if time_hyperparameters is not None: 
+            time_kernel.set_hyperparameters(time_hyperparameters)
+        K_time = time_kernel.count(time)
+        Q_time = time_kernel.square_root_matrix(K_time)
+        GP_st = GP_st@Q_time.T
+
+        if isinstance(space,list):
+            length_spaces = [sp.size for sp in space]
+            GP_st = GP_st.reshape(*length_spaces,time.size)
+        else:
+            GP_st = GP_st.reshape(space.size,space.size,time.size)
+
+
+
+        return GP_st
+
+    # def simulate_3d(self,x1,x2=None,x3=None,hyperparameters=None):
+    #     '''
+    #      This method allows the simulation of a Gaussian process (1d) on a domain x.
+    #     '''
+        
+    #     x1 = x1.ravel()
+    #     m1 = x1.size
+
+
+        
+    #     if hyperparameters is None:
+            
+    #         if ((x2 is None)&(x3 is None)):
+    #             K1 = self.count(x1)
+    #             Q1 = self.square_root_matrix(K1)
+    #             iid = np.random.randn(m1**2,m1)
+    #             y = np.kron(Q1,Q1) @ iid @ Q1.T
+    #             m2=m3=m1
+    #         elif x3 is None:
+    #             x2 = x2.ravel()
+    #             m2 = x2.size
+    #             K1 = self.count(x1)
+    #             Q1 = self.square_root_matrix(K1)
+    #             K2 = self.count(x2)
+    #             Q2 = self.square_root_matrix(K2)
+    #             iid = np.random.randn(m1*m2,m1)
+    #             y = np.kron(Q1,Q2) @ iid @ Q1.T
+    #             m3=m1
+
+    #         elif x2 is None:
+    #             x3 = x3.ravel()
+    #             m3 = x3.size
+    #             K1 = self.count(x1)
+    #             Q1 = self.square_root_matrix(K1)
+    #             K3 = self.count(x3)
+    #             Q3 = self.square_root_matrix(K3)
+    #             iid = np.random.randn(m1**2,m3)
+    #             y = np.kron(Q1,Q1) @ iid @ Q3.T
+    #             m2=m1
+
+    #         else:
+    #             x2 = x2.ravel()
+    #             m2 = x2.size
+    #             x3 = x3.ravel()
+    #             m3 = x3.size
+    #             K1 = self.count(x1)
+    #             Q1 = self.square_root_matrix(K1)
+    #             K2 = self.count(x2)
+    #             Q2 = self.square_root_matrix(K2)
+    #             K3 = self.count(x3)
+    #             Q3 = self.square_root_matrix(K3)
+    #             iid = np.random.randn(m1*m2,m3)
+    #             y = np.kron(Q1,Q2) @ iid @ Q3.T
+
+
+
+
+
+
+    #     elif isinstance(hyperparameters,list):
+
+
+    #         if len(hyperparameters)==1:
+               
+    #             self.set_hyperparameters(hyperparameters[0])
+    #             if ((x2 is None)&(x3 is None)):
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 iid = np.random.randn(m1**2,m1)
+    #                 y = np.kron(Q1,Q1) @ iid @ Q1.T
+    #                 m2=m3=m1
+    #             elif x3 is None:
+    #                 x2 = x2.ravel()
+    #                 m2 = x2.size
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 K2 = self.count(x2)
+    #                 Q2 = self.square_root_matrix(K2)
+    #                 iid = np.random.randn(m1*m2,m1)
+    #                 y = np.kron(Q1,Q2) @ iid @ Q1.T
+    #                 m3=m1
+    #             elif x2 is None:
+    #                 x3 = x3.ravel()
+    #                 m3 = x3.size
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 K3 = self.count(x3)
+    #                 Q3 = self.square_root_matrix(K3)
+    #                 iid = np.random.randn(m1**2,m3)
+    #                 y = np.kron(Q1,Q1) @ iid @ Q3.T
+    #                 m2=m1
+    #             else:
+    #                 x2 = x2.ravel()
+    #                 m2 = x2.size
+    #                 x3 = x3.ravel()
+    #                 m3 = x3.size
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 K2 = self.count(x2)
+    #                 Q2 = self.square_root_matrix(K2)
+    #                 K3 = self.count(x3)
+    #                 Q3 = self.square_root_matrix(K3)
+    #                 iid = np.random.randn(m1*m2,m3)
+    #                 y = np.kron(Q1,Q2) @ iid @ Q3.T
+
+
+    #         elif len(hyperparameters)==3:
+    #             if ((x2 is None)&(x3 is None)):
+    #                 self.set_hyperparameters(hyperparameters[0])
+
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 self.set_hyperparameters(hyperparameters[1])
+
+    #                 K2 = self.count(x1)
+    #                 Q2 = self.square_root_matrix(K2)
+    #                 self.set_hyperparameters(hyperparameters[2])
+
+    #                 K3 = self.count(x1)
+    #                 Q3 = self.square_root_matrix(K3)
+
+    #                 iid = np.random.randn(m1**2,m1)
+    #                 y = np.kron(Q1,Q2) @ iid @ Q3.T
+    #                 m2=m3=m1
+    #             elif x3 is None:
+    #                 self.set_hyperparameters(hyperparameters[0])
+
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 self.set_hyperparameters(hyperparameters[1])
+    #                 x2 = x2.ravel()
+    #                 m2 = x2.size
+    #                 K2 = self.count(x2)
+    #                 Q2 = self.square_root_matrix(K2)
+    #                 self.set_hyperparameters(hyperparameters[2])
+
+    #                 K3 = self.count(x1)
+    #                 Q3 = self.square_root_matrix(K3)
+
+    #                 iid = np.random.randn(m1*m2,m1)
+    #                 y = np.kron(Q1,Q2) @ iid @ Q3.T
+    #                 m3=m1
+    #             elif x2 is None:
+    #                 self.set_hyperparameters(hyperparameters[0])
+
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 self.set_hyperparameters(hyperparameters[1])
+                    
+    #                 K2 = self.count(x1)
+    #                 Q2 = self.square_root_matrix(K2)
+    #                 self.set_hyperparameters(hyperparameters[2])
+    #                 x3 = x3.ravel()
+    #                 m3 = x3.size
+
+    #                 K3 = self.count(x3)
+    #                 Q3 = self.square_root_matrix(K3)
+
+    #                 iid = np.random.randn(m1**2,m3)
+    #                 y = np.kron(Q1,Q2) @ iid @ Q3.T
+    #                 m2=m1
+    #             else:
+    #                 self.set_hyperparameters(hyperparameters[0])
+
+    #                 K1 = self.count(x1)
+    #                 Q1 = self.square_root_matrix(K1)
+    #                 self.set_hyperparameters(hyperparameters[1])
+    #                 x2 = x2.ravel()
+    #                 m2 = x2.size
+    #                 K2 = self.count(x2)
+    #                 Q2 = self.square_root_matrix(K2)
+    #                 self.set_hyperparameters(hyperparameters[2])
+    #                 x3 = x3.ravel()
+    #                 m3 = x3.size
+
+    #                 K3 = self.count(x3)
+    #                 Q3 = self.square_root_matrix(K3)
+
+    #                 iid = np.random.randn(m1*m2,m3)
+    #                 y = np.kron(Q1,Q2) @ iid @ Q3.T
+    #         else:
+    #             raise ValueError("In the 'simulate_2d' method, the hyperparameters must be a list of  size 1 or 3.")
+
+
+    #     else:
+    #         raise TypeError("In the 'simulate_2d' method, the hyperparameters must be a list.")
+            
+    #     return y.reshape(m1,m2,m3)
+
+
+
+    # @staticmethod
+    # def sigmoid_(x,s,x0):
+    #     return .5*(1+np.tanh((x-x0)/s))
 class Constant(Kernel):
 
     # def __init__(self, length_scale=1.0,hyperparameter_number=1,variance=1):

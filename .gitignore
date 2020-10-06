@@ -1,1 +1,6 @@
- gpasdnn/gpTFModels_old/
+makeprediction/kernel_local.py
+makeprediction/kernel_ignore.py
+
+makeprediction/timer.py
+*.log
+
