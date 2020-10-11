@@ -1,5 +1,6 @@
 makeprediction/kernel_local.py
 makeprediction/kernel_ignore.py
+makeprediction/__kernels__.py
 
 makeprediction/timer.py
 *.log

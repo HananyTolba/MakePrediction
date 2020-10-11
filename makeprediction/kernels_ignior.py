@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 # __author__ = "Hanany Tolba"
 '''
+
+
+
 A covariance function or kernel encodes our assumptions about the
 function which we wish to learn. This initial belief could
 be how smooth the function is or whether the function
