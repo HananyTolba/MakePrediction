@@ -986,12 +986,13 @@ class GaussianProcessRegressor():
 
 
         if self._kernel.__class__.__name__ == "Periodic":
-            if method is None:
-                #if self._xtrain.size <= 300:
-                    #self.periodicFitByInterSplit()
-                #else:                   
-                #    self.periodicFitBySplit()
-                thread_fit(self)
+            if (method is None):
+                if (self._xtrain.size > LARGE_SIZE):
+                    thread_fit(self)
+                else:
+                    thread_interfit(self)
+
+
 
 
             elif method == "default":

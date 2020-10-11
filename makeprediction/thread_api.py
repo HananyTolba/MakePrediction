@@ -122,15 +122,22 @@ def thread_fit(self):
     #else:
     hyp = result[-1,:]
     L = result[:,-1]
+    plt.plot(L)
+    plt.show()
     #print("erreur : ",np.abs(np.diff(L)).min())
     hyp[-1]  = L[np.argmin(np.abs(np.diff(L)))]
     hyp[-1] = np.round( hyp[-1],2)
-    #print("First period",hyp[-1])
+    print("First period",hyp[-1])
+
+    str_p = str(L[np.argmin(np.abs(np.diff(L)))])
+    str_p_2_num = float(str_p[:3])
+    print("First period new round ",str_p_2_num)
+
     List = np.round(result[:,1],3).tolist()
     period_est_= most_frequent(List)
 
     #hyp[-1]  = period_est_
-    #print("Second period",period_est_,"number : ",List.count(period_est_))
+    print("Second period",period_est_,"number : ",List.count(period_est_))
 
 
 
