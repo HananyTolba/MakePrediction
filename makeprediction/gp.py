@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 # __author__ = "Hanany Tolba"
 # __copyright__ = "Copyright 2020, Guassian Process as Deep Learning Model Project"
 # __credits__ = "Hanany Tolba"
