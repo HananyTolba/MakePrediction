@@ -1129,6 +1129,8 @@ class GaussianProcessRegressor():
                 self.std_noise = parmsfit_by_sampling[1]*stdy
                 self._kernel._variance = stdy**2
 
+                
+
             # if self._kernel.__class__.__name__ == "Linear":
                 # self._kernel.set_length_scale(parmsfit_by_sampling[0])
                 # self.std_noise = parmsfit_by_sampling[1]

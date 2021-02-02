@@ -20,7 +20,10 @@ logging.basicConfig(level=logging.ERROR)
 URL = 'http://www.makeprediction.com/periodic/v1/models/periodic_1d:predict'
 URL_IID = 'http://makeprediction.com/iid/v1/models/iid_periodic_300:predict'
 
-DomainName = "http://www.makeprediction.com"
+DomainName = "https://www.makeprediction.com"
+
+simple_DomainName = "https://simple.makeprediction.com"
+
 
 models = ["rbf_1d","matern12_1d","matern32_1d","matern52_1d",
           "linear_1d",
@@ -35,11 +38,11 @@ models = ["rbf_1d","matern12_1d","matern32_1d","matern52_1d",
 def kernel2url(kernel_str):
     #kernel_str = self._kernel.label().lower()
     if kernel_str  in models:
-        url_ec2 = os.path.join(DomainName,kernel_str + "/v1/models/" + kernel_str + ":predict")
+        url_ec2 = os.path.join(simple_DomainName,kernel_str + "/v1/models/" + kernel_str + ":predict")
 
     else:
         kernel_str_1d = kernel_str + "_1d"
-        url_ec2 = os.path.join(DomainName,kernel_str + "/v1/models/" + kernel_str_1d + ":predict")
+        url_ec2 = os.path.join(simple_DomainName,kernel_str + "/v1/models/" + kernel_str_1d + ":predict")
     
     if kernel_str == "periodic":
         url_ec2_noise = os.path.join(DomainName,"iid_periodic_300" + "/v1/models/" + "iid_periodic_300" + ":predict")
