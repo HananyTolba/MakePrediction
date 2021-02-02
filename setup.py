@@ -66,7 +66,9 @@ setup(
     platforms= [],
     # Keywords that define your package best
     install_requires=[            # I get to this in a second
-        "numpy<1.19.0,>=1.16.0",
+        #"numpy<1.19.0,>=1.16.0",
+        "numpy",
+
         "colorama",
         "tqdm",
         "termcolor",
@@ -78,7 +80,9 @@ setup(
         # only for the demo
     ],
     #package_data={'makeprediction': ['keras_600/*']},
-    python_requires=">=3.5, <=3.8.5",
+    #python_requires=">=3.5, <=3.8.5",
+    python_requires=">=3.5",
+
     include_package_data=True,
 
     # classifiers=[
