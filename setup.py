@@ -77,6 +77,7 @@ setup(
         "joblib",
         "matplotlib",
         "pandas",
+        "pytest", #only for test run on CI/CD
         # only for the demo
     ],
     #package_data={'makeprediction': ['keras_600/*']},
