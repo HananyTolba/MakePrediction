@@ -54,7 +54,7 @@ the *sparse* context and the automatic online update of prediction.
 Example
 ==========================
 
-Here is a simple example to(Python 3):
+Here is a simple example:
 
 ```python
 from makeprediction.quasigp import QuasiGPR as qgpr
@@ -64,16 +64,27 @@ import datetime
 import pandas as pd
 import numpy as np
 
-def fib(n: int) -> Iterator[int]:
-    a, b = 0, 1
-    while a < n:
-        yield a
-        a, b = b, a + b
-
-        
-f = lambda dt:  100*np.sin(2*np.pi*dt/500)*np.sin(2*np.pi*dt/3003)  + 500  
+#generate time series
+###############################
+  
 x = pd.date_range(start = datetime.datetime(2021,1,1), periods=1000, freq = '3s' )
 time2num = date2num(x)
 
+# f(x)
+f = lambda dt:  100*np.sin(2*np.pi*dt/500)*np.sin(2*np.pi*dt/3003)  + 500
+# f(x) + noise
 y = f(time2num) + 7*np.random.randn(x.size)
+
+# split time serie into train and test
+trainSize = int(x.size *.7)
+xtrain,ytrain = x[:trainSize], y[:trainSize]
+xtest,ytest = x[trainSize:], y[trainSize:]
+
+# creat an instance of qgpr as model and plot with plotly:
+#########################################
+model = qgpr(xtrain,ytrain, RBF()) 
+model.plotly()
+<img src="assets/model.png" alt="makeprediction logo" width="600px"/>
+
+
 
