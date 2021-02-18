@@ -2,8 +2,8 @@
 <!-- ![alt text](assets/logo.png)
  -->
 <img src="assets/logo.png" alt="makeprediction logo" width="300px"/>
-<img src="assets/logo_1.png" alt="makeprediction logo" width="300px"/>
-
+<!-- <img src="assets/logo_1.png" alt="makeprediction logo" width="300px"/>
+ -->
 
 
 MakePrediction is a package for building Gaussian process models in Python. It was originally created by [Hanany Tolba].
