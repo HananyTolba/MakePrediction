@@ -80,11 +80,24 @@ trainSize = int(x.size *.7)
 xtrain,ytrain = x[:trainSize], y[:trainSize]
 xtest,ytest = x[trainSize:], y[trainSize:]
 
-# creat an instance of qgpr as model and plot with plotly:
+# Create an instance of the class qgpr as model and plot it with plotly:
 #########################################
 model = qgpr(xtrain,ytrain, RBF()) 
 model.plotly()
+```
 <img src="assets/model.png" alt="makeprediction logo" width="600px"/>
 
+```python
+#fit the model
+model.fit()
+```
 
+
+```python
+#predict with model and plot
+model.predict(xtest)
+model.plotly(ytest)
+```
+
+<img src="assets/model_predict.png" alt="makeprediction logo" width="600px"/>
 
