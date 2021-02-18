@@ -1,6 +1,6 @@
 
-<!-- ![alt text](http://url/to/img.png)
- -->
+![alt text](assets/logo.png)
+
 
 
 MakePrediction is a package for building Gaussian process models in Python. It was originally created by [Hanany Tolba].
@@ -34,7 +34,7 @@ the *sparse* context and the automatic online update of prediction.
 * Energy demand prediction.
 * Stock price prediction.
 * Stock market prediction.
-
+* ...
 ### Latest release from PyPI
 
 * pip install makeprediction
