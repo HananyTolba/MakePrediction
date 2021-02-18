@@ -212,6 +212,25 @@ Deployement
 
 loaded_model.deploy2dashbord('live_db.csv')
 ```
+```bash
+
+Dash is running on http://127.0.0.1:9412/
+
+INFO:makeprediction.quasigp:Dash is running on http://127.0.0.1:9412/
+
+ * Serving Flask app "makeprediction.quasigp" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: off
+INFO:werkzeug: * Running on http://127.0.0.1:9412/ (Press CTRL+C to quit)
+INFO:werkzeug:127.0.0.1 - - [18/Feb/2021 14:22:51] "POST /_dash-update-component HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Feb/2021 14:22:51] "POST /_dash-update-component HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [18/Feb/2021 14:22:51] "POST /_dash-update-component HTTP/1.1" 200 -
+```
+
+
 <img src="assets/Screenshot.png" alt="makeprediction logo" width="700px"/>
+
 
 
