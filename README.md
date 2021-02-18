@@ -27,6 +27,7 @@ the *sparse* context and the automatic online update of prediction.
 * Modelling and analysis time series.
 
 * Automatic time-series prediction (forecasting) using Gaussian processes model.
+* Real-Time time series prediction.
 * Deploy on production the fitted (or saved) makeprediction model.
 
 ### Applications:
