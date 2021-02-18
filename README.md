@@ -1,6 +1,8 @@
 
-![alt text](assets/logo.png)
+<!-- ![alt text](assets/logo.png)
+ -->
 <img src="assets/logo.png" alt="makeprediction logo" width="300px"/>
+<img src="assets/logo_1.png" alt="makeprediction logo" width="300px"/>
 
 
 
