@@ -85,7 +85,7 @@ xtest,ytest = x[trainSize:], y[trainSize:]
 model = qgpr(xtrain,ytrain, RBF()) 
 model.plotly()
 ```
-<img src="assets/model.png" alt="makeprediction logo" width="600px"/>
+<img src="assets/model.png" alt="makeprediction logo" width="700px"/>
 
 ```python
 #fit the model
@@ -98,7 +98,7 @@ model.fit()
 model.predict(xtest)
 model.plotly(ytest)
 ```
-<img src="assets/model_predict.png" alt="makeprediction logo" width="600px"/>
+<img src="assets/model_predict.png" alt="makeprediction logo" width="700px"/>
 
 
 ```python
@@ -110,6 +110,27 @@ for i in range(xtest.size):
     ypred.append(yp)
     data = {'x_update': xtest[i], 'y_update': ytest[i],}
     model.update(**data)
+
+
+#plot 
+
+import matplotlib.pyplot as plt
+plt.figure(figsize = (10,5))
+plt.plot(xtest,ytest,'b', label ='Test')
+plt.plot(xtest,ypred,'r',label='Prediction')
+plt.legend()
+plt.savefig('fig_pred.png', dpi=300)
 ```
-<img src="assets/fig_pred.png" alt="makeprediction logo" width="600px"/>
+<img src="assets/fig_pred.png" alt="makeprediction logo" width="700px"/>
+
+The previous prediction with updating, can be obtained simply by the "predict" method as follows:
+
+```python
+#prediction with update 
+model.predict(xtest,ytest[:-1])
+#And ploly 
+model.plotly(ytest)
+```
+<img src="assets/model_predict_with_update.png" alt="makeprediction logo" width="700px"/>
+
 
