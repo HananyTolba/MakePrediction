@@ -1069,7 +1069,8 @@ class QuasiGPR():
         self._std_yfit = sum(sig_list)
         self._kernel = sum([s._kernel for s in self._modelList])
         
-        
+        self.score()
+
 
 
 
@@ -1637,7 +1638,7 @@ class QuasiGPR():
                                   line_color = 'rgba(0,0,255,.8)',
                                   name='Long-term prediction',)
             trace3 = go.Scatter(x=df_pred_horizon['date'], y=df_pred_horizon['ypred_horizon'], 
-                                mode = 'markers',
+                                mode = 'markers + lines',
                                 name=f'Short-term prediction(prediction horizon = {prediction_horizon})',
 
                                   line_color = 'rgba(255,0,0,.8)')
