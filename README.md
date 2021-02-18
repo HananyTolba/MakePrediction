@@ -133,4 +133,15 @@ model.plotly(ytest)
 ```
 <img src="assets/model_predict_with_update.png" alt="makeprediction logo" width="700px"/>
 
+```python
+# Errors of prediction
+model.score(ytest)
+
+{'train_errors': {'MAE': 5.525659848832947,
+  'MSE': 48.75753482298262,
+  'R2': 0.9757047695585449},
+ 'test_errors': {'MAE': 6.69916209795533,
+  'MSE': 68.7186589422385,
+  'R2': 0.9816696384584944}}
+```
 

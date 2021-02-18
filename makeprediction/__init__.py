@@ -8,10 +8,13 @@ from makeprediction import quasigp
 from makeprediction import invtools
 from makeprediction import thread_api
 from makeprediction import version 
-from makeprediction import url 
+from makeprediction import url
+from makeprediction import ts_generation
 
 
-__all__ = ["gp","kernels","invtools","quasigp","thread_api",'url']
+
+
+__all__ = ["gp","kernels","invtools","quasigp","thread_api",'url','ts_generation']
 
 
 __author__ = version.__author__
