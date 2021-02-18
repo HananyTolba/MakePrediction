@@ -49,7 +49,7 @@ setup(
     # Chose a license from here:
     # https://help.github.com/articles/licensing-a-repository
     license="GPLv3",
-    description="Fast and easy gaussian process regression using deep neural networks’s",
+    description="Fast and easy gaussian process regression for time series prediction",
     author=__author__, 
     #long_description = long_description,
     long_description=open('README.md').read(),
@@ -61,14 +61,12 @@ setup(
     keywords=[
         'Gaussian Process Regression',
         'Time series prediction',
-        #'Tensorflow',
-        'Deep Learning'],
+        'Deep Learning',
+        'Machine Learning'],
     platforms= [],
-    # Keywords that define your package best
     install_requires=[            # I get to this in a second
         #"numpy<1.19.0,>=1.16.0",
-        "numpy",
-
+        'numpy',
         "colorama",
         "tqdm",
         "termcolor",
@@ -77,13 +75,17 @@ setup(
         "joblib",
         "matplotlib",
         "pandas",
-        "pytest", #only for test run on CI/CD
+        "pytest",
+        "plotly",
+        "dash",
+        "dash-bootstrap-components",
+        
+        #"matplotlib",
         # only for the demo
     ],
     #package_data={'makeprediction': ['keras_600/*']},
     #python_requires=">=3.5, <=3.8.5",
     python_requires=">=3.5",
-
     include_package_data=True,
 
     # classifiers=[

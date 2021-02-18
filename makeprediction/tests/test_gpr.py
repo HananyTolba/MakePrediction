@@ -3,15 +3,14 @@
 
 from makeprediction.kernels import *
 from makeprediction.kernels import KernelSum, KernelProduct
+from makeprediction.invtools import fast_pd_inverse as pdinv
+
 from makeprediction.gp import GaussianProcessRegressor as GPR
 
 import pytest
 import numpy as np
 from numpy.testing import assert_almost_equal
-#from tensorflow.keras.models import load_model
-#from tensorflow import keras
 
-#import tensorflow
 
 
 
@@ -73,19 +72,44 @@ kernels =["rbf","matern12","matern32","matern52"]
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_prediction(kernel):
-    #kernel = "rbf"
+    
     gpr = GPR(x,y)
     gpr.kernel_choice = kernel
-    #gpr.std_noise =.001
-    # Test the interpolating property for different kernels.
+    
     gpr.fit()
     gpr.std_noise =.0001
+    xtrainTransform, a, b = gpr.x_transform()
+    K_noise = gpr._kernel.count(
+                    xtrainTransform,
+                    xtrainTransform)
+    np.fill_diagonal(K_noise, K_noise.diagonal() + gpr._sigma_n**2)
+
+    invK_noise = pdinv(K_noise)
+            
+    gpr._invK = invK_noise
+
 
     y_pred, y_cov = gpr.predict()
     #print(y_pred,"y : ", y)
 
     assert_almost_equal(y_pred, y,decimal = 5)
     assert_almost_equal(y_cov**2, 0.,decimal = 5)
+# ##############
+#     #kernel = "rbf"
+#     gpr = GPR(x,y)
+#     gpr.kernel_choice = kernel
+#     #gpr.std_noise =.001
+#     # Test the interpolating property for different kernels.
+#     gpr.fit()
+#     gpr.std_noise =.01
+
+#     y_pred, y_cov = gpr.predict()
+#     #print(y_pred,"y : ", y)
+
+#     assert_almost_equal(y_pred, y,decimal = 2)
+#     assert_almost_equal(y_cov**2, 0.,decimal = 2)
+
+########################
 
 # @pytest.mark.parametrize('kernel', kers)
 # def test_simulate(kernel):

@@ -17,11 +17,14 @@
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 
 from concurrent.futures import ThreadPoolExecutor
-#from makeprediction.gp import date2num
+from makeprediction.invtools import date2num
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
 #from makeprediction.gp import date2num
 
 
@@ -31,17 +34,23 @@ import json
 
 import numpy as np
 from scipy.signal import resample
+from scipy import interpolate
+from makeprediction.url import periodic2url
+#from makeprediction.quasigp import QuasiGPR as QGPR 
 
-from makeprediction.url import kernel2url
 
+#from makeprediction.log_lh import log_lh_stable
 
 # URL = 'http://www.makeprediction.com/periodic/v1/models/periodic_1d:predict'
 # URL_IID = 'http://makeprediction.com/iid/v1/models/iid_periodic_300:predict'
+# URL = "localhost:8533/v1/models/PeriodicPlusRBF:predict"
 
-
-(URL, URL_IID) = kernel2url("periodic")
 
 from collections import Counter
+
+
+
+
 
 def most_frequent(List): 
     occurence_count = Counter(List) 
@@ -57,6 +66,30 @@ SMALL_SIZE = 300
 
 
 
+
+
+
+def requests_retry_session(
+    retries=3,
+    backoff_factor=0.3,
+    status_forcelist=(500, 502, 504),
+    session=None,
+):
+    session = session or requests.Session()
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+        method_whitelist=frozenset(['GET', 'POST']),
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
+
+
 def fetch(session, url,data):
     with session.post(url,data=json.dumps(data)) as response:
         result = np.array(response.json()["outputs"][0])
@@ -64,91 +97,104 @@ def fetch(session, url,data):
 
 
 
-def thread_fit(self):
+def thread_fit(self,method = None):
+    (URL,URL_LS ,URL_IID) = periodic2url("periodic",method)
+
     x,y = self._xtrain, self._ytrain
 
     x = date2num(x)
 
+    
+
 
     std_y = y.std()
+    y =  (y - y.mean())/std_y
 
-    y = (y - y.mean())/std_y
 
-    min_p = 50/x.size
-    
-    p = np.linspace(min_p,1,200)
+    min_p = 50/y.size 
+    #p_large = np.linspace(.2,1,100)
+   # p_small = np.linspace(min_p,.2,100)
+    #p = np.hstack([p_small,p_large])
+
+    p = np.linspace(min_p,1,100)
     mm = y.size
-    y_list = [y[:int(s*mm)] for s in p]
-
-    y_list = [list(x) for x in set(tuple(x) for x in y_list)]
-    y_list.sort(key=len)
+    int_p = mm*p
+    int_p = int_p.astype(int)
+    int_p = np.unique(int_p)
+    
+    y_list = [y[-s:] for s in int_p]
 
     
-    nn = list(map(len,y_list))
-
-    #print("nombre de listes :",len(nn))
     data_list = []
+    #yr_list = []
     for _ in y_list:
-        z = resample(_,SMALL_SIZE)
-        z =  (z - z.mean())/z.std()
+        f = interpolate.interp1d(np.linspace(-1,1,len(_)), _)
+        xnew = np.linspace(-1,1,SMALL_SIZE)
+        ynew = f(xnew)
+        ynew =  (ynew - ynew.mean())/ynew.std()
+        #plt.plot(ynew)
+        #plt.show()
+        #yr_list.append(ynew)
 
-        data = {"inputs":z.reshape(1,-1).tolist()}
+        data = {"inputs":ynew.reshape(1,-1).tolist()}
         data_list.append(data)
+
+
+
     tt = len(data_list)
 
     with requests.Session() as session:
         std_noise = fetch(session, URL_IID,data_list[-1])
-    self.std_noise = std_noise
+        #length_scale = fetch(session, URL_LS,data_list[-1])
+
+    self._sigma_n = std_noise[0]*std_y
+
     result = []
 
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        with requests.Session() as session:
-            result += executor.map(fetch, [session] * tt, [URL] * tt,data_list)
-            executor.shutdown(wait=True)
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        #with requests.Session() as session:
+        result += executor.map(fetch, [requests_retry_session()] * tt, [URL] * tt,data_list)
+        executor.shutdown(wait=True)
 
 
 
-    result = np.array(result)
+    result = np.array(result).ravel()
 
-    result[:,1] = result[:,1]*np.array(nn)/mm
+    result= result*np.array(int_p)/mm
+    sd_result = (result-result.mean())/result.std()
+    p_estimate_= sd_result[np.argmin(np.abs(np.diff(sd_result)))]
+    p_estimate = result[sd_result == p_estimate_]
 
+   
+    sd_result_round = np.round(sd_result,2)
+    p_freq_round = most_frequent(sd_result_round)
+    p_freq_set =  result[sd_result_round == p_freq_round]
+    p_freq = p_freq_set.mean()
+
+    z_ls = y[:int(2*p_freq*y.size)]
+    z_ls_resized = resample(z_ls,SMALL_SIZE)
+    z_ls_resized =  (z_ls_resized - z_ls_resized.mean())/z_ls_resized.std()
+    data_ls = {"inputs":z_ls_resized.reshape(1,-1).tolist()}
+
+    with requests.Session() as session:
+        length_scale = fetch(session, URL_LS,data_ls)
+    length_scale = length_scale[0]
     
+    hyp_dict1 = dict(zip(["length_scale","period"],[length_scale,result[-1]]))
+    hyp_dict1["variance"] = std_y**2
 
-    hyp = result[-1,:]
+    hyp_dict2 = dict(zip(["length_scale","period"],[length_scale,p_freq]))
+    hyp_dict2["variance"] = std_y**2
 
-    #if result[-1,1]>=.99:
-    #    hyp = result[-1,:]
-    #else:
-    hyp = result[-1,:]
-    L = result[:,-1]
-    plt.plot(L)
-    plt.show()
-    #print("erreur : ",np.abs(np.diff(L)).min())
-    hyp[-1]  = L[np.argmin(np.abs(np.diff(L)))]
-    hyp[-1] = np.round( hyp[-1],2)
-    print("First period",hyp[-1])
+    hyp_dict3 = dict(zip(["length_scale","period"],[length_scale,p_estimate[0]]))
+    hyp_dict3["variance"] = std_y**2
 
-    str_p = str(L[np.argmin(np.abs(np.diff(L)))])
-    str_p_2_num = float(str_p[:3])
-    print("First period new round ",str_p_2_num)
+    #self.set_hyperparameters(hyp_dict)
+    #print(hyp_dict2,hyp_dict3)
+    #return hyp_dict3,hyp_dict3
 
-    List = np.round(result[:,1],3).tolist()
-    period_est_= most_frequent(List)
-
-    #hyp[-1]  = period_est_
-    print("Second period",period_est_,"number : ",List.count(period_est_))
-
-
-
-    
-    hyp_dict = dict(zip(["length_scale","period"],hyp))
-    hyp_dict["variance"] = std_y**2
-
-    self.set_hyperparameters(hyp_dict)
-
-
-
+    return hyp_dict2,hyp_dict3
 
 
 
@@ -159,14 +205,21 @@ def thread_fit(self):
 def thread_interfit(self):
     x,y = self._xtrain, self._ytrain
     x = date2num(x)
-    x_plus = np.linspace(x[0],  x[-1],int(x.size*5) )
-    y_plus = np.interp(x_plus, x, y)
-    self._xtrain, self._ytrain = x_plus, y_plus
-    thread_fit(self)
+    f = interpolate.interp1d(np.linspace(-1,1,y.size), y)
+    xnew = np.linspace(-1,1,int(x.size*5))
+    ynew = f(xnew)
+    #x_plus = np.linspace(x[0],  x[-1],int(x.size*5) )
+    #x_plus = np.linspace(-1,  1,int(x.size*5) )
 
+    #y_plus = resample(y, int(x.size*5))
+    self._xtrain, self._ytrain = xnew, ynew
+    L = thread_fit(self)
+    #print(L)
     self._xtrain, self._ytrain = x, y
 
-def date2num(dt):
+    return L
+
+def date2num_old(dt):
     if np.issubdtype(dt.dtype, np.datetime64):
         x = dt.astype(int).values/10**9/3600/24
     elif isinstance(dt, np.ndarray):
@@ -179,134 +232,4 @@ def date2num(dt):
     else:
         raise TypeError('The {} must be a numpy vector or pandas DatetimeIndex'.format(dt))
     return x
-
-
-
-
-
-
-
-
-
-
-
-def thread_intersplitfit(self):
-    x,y = self._xtrain, self._ytrain
-    x = date2num(x)
-    x_plus = np.linspace(x[0],  x[-1],int(x.size*5) )
-    y_plus = np.interp(x_plus, x, y)
-    self._xtrain, self._ytrain = x_plus, y_plus
-    thread_splitfit(self)
-
-    self._xtrain, self._ytrain = x, y
-
-
-
-
-
-
-
-def thread_splitfit(self):
-    x,y = self._xtrain, self._ytrain
-
-    x = date2num(x)
-
-
-    std_y = y.std()
-
-   # y = (y - y.mean())/std_y
-
-    min_p = 100/x.size
-    
-    p = np.linspace(min_p,1,100)
-    mm = y.size
-    y_list = [y[:int(s*mm)] for s in p]
-
-    y_list = [list(x) for x in set(tuple(x) for x in y_list)]
-    y_list.sort(key=len)
-
-    # plt.plot(y_list[3],'o')
-    # plt.plot(y_list[20],'x')
-    # plt.plot(y_list[99])
-    # plt.show()
-    #y_list2 = [y[-int(s*mm):] for s in p]
-    #y_list = y_list1 + y_list2
-    nn = list(map(len,y_list))
-
-    #print("nombre de listes :",len(nn))
-    data_list = []
-    for _ in y_list:
-        x_interp = np.linspace(-1, 1, SMALL_SIZE )
-
-        #x_transform, a, b = self.line_transform(np.linspace(-1, 1, len(_) ).reshape(-1, 1))
-        x_transform, a, b = self.line_transform(np.linspace(-1, 1, len(_) ))
-
-        y_interp = np.interp(x_interp, x_transform, _)
-        #print("shape_periodic : ",y_interp.shape)
-        #period_est_ = get_parms_from_api(y_interp,self._kernel.label())
-        y_interp = (y_interp - y_interp.mean()) / y_interp.std() #---> new
-
-        z = y_interp
-
-        data = {"inputs":z.reshape(1,-1).tolist()}
-        data_list.append(data)
-    tt = len(data_list)
-
-    with requests.Session() as session:
-        std_noise = fetch(session, URL_IID,data_list[-1])
-    self.std_noise = std_noise
-    result = []
-
-
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        with requests.Session() as session:
-            result += executor.map(fetch, [session] * tt, [URL] * tt,data_list)
-            executor.shutdown(wait=True)
-
-
-
-    result = np.array(result)
-
-    result[:,1] = result[:,1]*np.array(nn)/mm
-
-    # plt.plot(result[:,1])
-    # plt.show()
-
-    # #print("most frequent : ", most_frequent(np.round(result[:,1].ravel(),2)))
-
-
-    hyp = result[-1,:]
-
-    if result[-1,1]>=.99:
-        hyp = result[-1,:]
-    else:
-        hyp = result[-1,:]
-        L = result[:,-1]
-        #print("erreur : ",np.abs(np.diff(L)).min())
-        hyp[-1]  = np.round(L[np.argmin(np.abs(np.diff(L)))],3)
-
-
-    #L = result[:,-1]
-    #hyp[-1]  = L[np.argmin(np.abs(np.diff(L)))]
-    #hyp[-1] = most_frequent(np.round(result[:,1].ravel(),2))
-
-    # if hyp[-1]<.01:
-    #     hyp[-1] = round(hyp[-1] ,4)
-    # elif hyp[-1]<.1:
-    #     hyp[-1] = round(hyp[-1] ,3)
-    # else:
-    #     hyp[-1] = round(hyp[-1] ,2)
-
-
-
-    hyp_dict = dict(zip(["length_scale","period"],hyp))
-    hyp_dict["variance"] = std_y**2
-
-    self.set_hyperparameters(hyp_dict)
-
-
-
-
-
-
 

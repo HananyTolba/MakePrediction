@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 # __author__ = "Hanany Tolba"
 # __copyright__ = "Copyright 2020, Guassian Process as Deep Learning Model Project"
 # __credits__ = "Hanany Tolba"
@@ -24,9 +25,11 @@ logging.basicConfig(level=logging.ERROR)
 import matplotlib.pyplot as plt
 import importlib
 import copy
+from copy import copy, deepcopy
 import joblib 
-from makeprediction.thread_api import thread_fit, thread_interfit, thread_splitfit, thread_intersplitfit
-
+from makeprediction.thread_api import thread_fit, thread_interfit
+#from makeprediction.periodic_new import periodicfit
+#from makeprediction.periodic_api import thread_fit_periodic, thread_interfit_periodic 
 
 from makeprediction.invtools import fast_pd_inverse as pdinv
 from makeprediction.invtools import inv_col_add_update, inv_col_pop_update
@@ -36,7 +39,8 @@ from makeprediction.kernels import *
 from makeprediction.url import kernel2url
 
 #####from makeprediction.kernels import date2num
-
+from scipy.optimize import minimize
+from scipy.linalg import LinAlgError
 import inspect
 import pandas as pd
 from collections import Counter
@@ -57,12 +61,15 @@ import numpy as np
 from scipy.interpolate import interp1d
 #from tensorflow import keras
 import scipy.signal 
-
+from numpy.linalg import cholesky, det, lstsq
 
 
 #from tensorflow.keras import backend as K
 from scipy import signal
 from scipy.signal import correlate
+from scipy.signal import resample
+from scipy import interpolate
+
 from numpy import argmax, mean, diff, log, nonzero
 #from termcolor import *
 from tqdm import tqdm
@@ -73,19 +80,8 @@ import colorama
 colorama.deinit()
 colorama.init(strip=False)
 
-def date2num(dt):
-    if np.issubdtype(dt.dtype, np.datetime64):
-        x = dt.astype(int).values/10**9/3600/24
-    elif isinstance(dt, np.ndarray):
-        if dt.ndim == 1:
-            x = dt
-        elif 1 in dt.shape:
-            x = dt.ravel()
-        else:
-            raise ValueError('The {} must be a one dimension numpy array'.format(dt)) from None
-    else:
-        raise TypeError('The {} must be a numpy vector or pandas DatetimeIndex'.format(dt)) from None
-    return x
+from makeprediction.invtools import date2num
+
 
 # cprint('hello'.upper(), 'green')
   
@@ -106,7 +102,6 @@ import requests
 SMALL_SIZE  = 300
 LARGE_SIZE  = 600
 
-Ports = list(range(8501,8512))
 kernels = ["rbf_1d","matern12_1d","matern32_1d","matern52_1d",
           "linear_1d",
           "polynomial_1d",
@@ -118,10 +113,9 @@ kernels = ["rbf_1d","matern12_1d","matern32_1d","matern52_1d",
           
 
           ]
-PORTS = dict(zip(kernels,Ports))
 
 
-DomainName = "http://www.makeprediction.com"
+DomainName = "https://www.simple.makeprediction.com"
 
 def get_parms_from_api(y,kernel=None):
     y = y.reshape(1,-1)
@@ -376,7 +370,7 @@ class GaussianProcessRegressor():
 
 
 
-    def __init__(self,xtrain=None,ytrain=None, kernel=RBF(), model=None, sigma_n=.01):
+    def __init__(self,xtrain=None,ytrain=None, kernel=RBF(), model=None, sigma_n=.01, K = None, invK=None,a =None, b=None):
         '''
         Constructor of the Gaussian process regression class:<
         It has five attributes:
@@ -397,6 +391,14 @@ class GaussianProcessRegressor():
         #best_model = load_model(path)
         #self._model = best_model
         self._sigma_n = sigma_n
+
+        #add recently
+        #self._K = K
+        self._invK = invK
+        self._a = a
+        self._b = b
+
+
         # self._pred = pred
 
 
@@ -530,40 +532,39 @@ class GaussianProcessRegressor():
         data = {"inputs":y.tolist()}
         url_ec2 = kernel2url(self._kernel.label().lower())
         res = []
+
         try:
             for url in url_ec2:
-                r = requests.post(url, data=json.dumps(data),timeout=1)
+                r = requests.post(url, data=json.dumps(data),timeout=5)
                 res.append(np.array(r.json()["outputs"][0]))
         except: 
-            r = requests.post(url_ec2, data=json.dumps(data),timeout=1)
+            r = requests.post(url_ec2, data=json.dumps(data),timeout=5)
             res = np.array(r.json()["outputs"][0])
+        # except:
+        #     url_ec2 = kernel2url("model_expression_predict")
+        #     r = requests.post(url_ec2, data=json.dumps(data),timeout=5)
+        #     res = np.array(r.json()["outputs"][0])
+
         return res
 
-
-    
-
-
-    #@staticmethod
-    def line_transform1(self,Y):
+   
+    def x_transform(self):
         '''
         This function transforms any line or segment [a, b] to segment [-3, 3] and
          then returns the parameters of the associated model.
         '''
-        names_cls = self._kernel.__class__.__name__
-        #Y = self._xtrain
+        names_cls = self._kernel.label()
+        Y = date2num(self._xtrain)
         if names_cls == "Periodic":
             X = np.linspace(-1, 1, Y.size)
-        #elif names_cls == "ChangePointLinear":
-        #    X = np.linspace(0, 1, Y.size)
-
+        
         else:
             X = np.linspace(-3, 3, Y.size)
 
-        modeleReg = LinearRegression()
-
-        modeleReg.fit(Y, X)
-        res = modeleReg.predict(Y)
-        return res, float(modeleReg.intercept_), float(modeleReg.coef_)
+        fit = np.polyfit(Y,X , 1)
+        res = fit[0]*Y + fit[1]
+        return res, fit[1], fit[0]
+    
 
 
     #@staticmethod
@@ -612,6 +613,7 @@ class GaussianProcessRegressor():
         x = np.array(x)
         return x.ravel()
 
+
     @staticmethod
     def _sorted(x,y,index = False):
         x = np.array(x)
@@ -624,7 +626,47 @@ class GaussianProcessRegressor():
             return x[ind], y[ind]
 
 
+    def log_lh_stable(self, theta, noise = None):
+        if noise is None:
+            noise = .1
 
+        x,y = self._xtrain, self._ytrain
+
+        x = date2num(x)
+
+        #noise = self._sigma_n
+
+        SMALL_SIZE_NEW= 300
+
+        x_inter = np.linspace(x[0],  x[-1],SMALL_SIZE_NEW)
+        y_resample = np.interp(x_inter, x, y)
+     
+        
+        #y_resample = scipy.signal.resample(y,SMALL_SIZE)
+
+        #model_resample = GPR(np.linspace(-1,1,SMALL_SIZE),scipy.signal.resample(y,SMALL_SIZE),Periodic())
+        X_train, Y_train = np.linspace(-1,1,SMALL_SIZE_NEW), y_resample
+
+        
+        def ls(a, b):
+            return lstsq(a, b, rcond=-1)[0]
+        
+        kernel = Periodic()
+        #kernel = self._kernel
+        d = {'variance': 1, 'length_scale': 1, 'period': theta}
+
+        kernel.set_hyperparameters(d)
+        
+        K = kernel.count(X_train) + noise**2 * np.eye(X_train.size)
+        
+
+        L = cholesky(K)
+        return np.sum(np.log(np.diagonal(L))) + \
+               0.5 * Y_train.dot(ls(L.T, ls(L, Y_train))) + \
+               0.5 * len(X_train) * np.log(2*np.pi)
+
+
+    
 
 
 
@@ -635,185 +677,6 @@ class GaussianProcessRegressor():
 
 
 
-    def p_fit(self,x,y):
-
-
-
-
-        #x = date2num(x)
-
-
-        #x,y = self._xtrain, self._ytrain
-
-        ystd = y.std()
-        #y = (y - y.mean()) / y.std()
-
-        
-        n = y.size
-#=================================================================
-        x_interp = np.linspace(-1, 1, SMALL_SIZE )
-
-        #x_transform, a, b = self.line_transform(x.reshape(-1, 1))
-        x_transform, a, b = self.line_transform(x)
-
-        y_interp = np.interp(x_interp, x_transform, y)
-        y_interp = (y_interp - y_interp.mean()) / y_interp.std() #---> new
-
-        #print("shape_periodic : ",y_interp.shape)
-        #period_est_ = get_parms_from_api(y_interp,self._kernel.label())
-        period_est_,noise_std = self.get_parms_from_apiREST(y_interp)
-
-        #period_est_ = newModel.predict(y_interp.reshape(1,x_interp.size)) 
-        #period_est_ = period_est_.ravel()
-
-        #===============noise std===========
-        #noise_std = get_parms_from_api(y_interp,"iid_periodic_300")
-        #noise_std = model_periodic_noise.predict(y_interp.reshape(1,x_interp.size))
-        #noise_std = noise_std.ravel()
-        self._sigma_n = noise_std[0]*ystd
-        #print("period_est_ (methode1) :",period_est_)
-#=================================================================
-        # x_interp = np.linspace(-1,1,SMALL_SIZE )
-        # y_interp = np.interp(x_interp, x, y)
-
-        
-        # parms_est_list = newModel.predict(y_interp.reshape(1,x_interp.size)) 
-        # parms_est_list = parms_est_list.ravel()
-
-        #plt.plot(x_transform,y)
-        #plt.plot(x_interp,y_interp)
-        #plt.show()
-#=================================================================
-        #print("period_est_ (methode2) :",parms_est_list)
-
-        #parms_est_list = parms_est_list[-1]
-        #return parms_est_list
-
-        return period_est_
-    
-
-    def periodicFitByRandomSampling(self):
-        y = self._ytrain
-        ystd = y.std()
-        y = (y - y.mean()) / y.std()
-
-
-
-        n = y.size
-        parms = []
-        if (n<310):
-            print("The 'Split' method was automatically chosen because the data size is very small for the 'Resampling' method.")
-
-            return self.periodicFitBySplit()
-        
-        parmsList = []
-        for i in range(100):
-            I = np.random.choice(y.size, SMALL_SIZE , replace=False)
-            I = np.sort(I)
-            yI = y[I]
-
-            #yre12 = scipy.signal.resample(y[:int(m)],SMALL_SIZE )
-
-
-
-            #p_est_12 = newModel.predict(yI.reshape(1,-1)).ravel()
-            p_est_12 = get_parms_from_api(yI,"periodic")
-
-            p_est_12[-1] =p_est_12[-1]*SMALL_SIZE /y.size
-
-            parmsList.append(p_est_12)
-
-        npArray = np.array(parmsList)
-        #print(npArray.shape)
-        #plt.plot(npArray)
-        #plt.show()
-
-        hyp = npArray.mean(axis=0)
-
-        #print(hyp)
-
-        hyp_dict = dict(zip(["length_scale","period"],hyp))
-        hyp_dict["variance"] = ystd**2
-        self.set_hyperparameters(hyp_dict)
-
-
-        
-
-    def periodicFitByResampling(self):
-        y = self._ytrain
-        ystd = y.std()
-        y = (y - y.mean()) / y.std()
-        yre = scipy.signal.resample(y,SMALL_SIZE )
-        yre = (yre - yre.mean()) / yre.std()
-
-        _,noise_std = self.get_parms_from_apiREST(yre)
-        noise_std = noise_std.ravel()
-
-        self._sigma_n = noise_std[0]*ystd
-
-        n = y.size
-        p=1
-        parms = []
-        if (n<100):
-            print("The 'Split' method was automatically chosen because the data size is very small for the 'Resampling' method.")
-
-            return self.periodicFitBySplit()
-            
-            
-        while int(n*p)>=SMALL_SIZE:
-            m = n*p
-            yre12 = scipy.signal.resample(y[:int(m)],SMALL_SIZE )
-
-            yre12 = (yre12 - yre12.mean()) / yre12.std()
-
-            p_est_12,_ = self.get_parms_from_apiREST(yre12)
-
-            #p_est_12 = newModel.predict(yre12.reshape(1,-1)).ravel()
-            p_est_12[-1] =p_est_12[-1]*int(m)/y.size
-            #noise_std = model_periodic_noise.predict(yre12.reshape(1,yre12.size))
-            #noise_std = get_parms_from_api(yre12,"iid_periodic_300")
-
-            #noise_std = noise_std.ravel()
-            #self._sigma_n = noise_std[0]*ystd
-
-
-            if ((p==1)&(p_est_12[-1]>.95)):
-                hyp = p_est_12
-                hyp_dict = dict(zip(["length_scale","period"],hyp))
-                hyp_dict["variance"] = ystd**2
-                self.set_hyperparameters(hyp_dict)
-                break
-
-
-                
-            else:
-                p = p - .01
-                if (p<=0):
-                    break
-                parms.append(p_est_12)
-        if len(parms)>1:
-            parms = np.array(parms)
-            #plt.plot(parms[:,1])
-            #plt.show()
-            L = parms[:,1]
-            periodEst = L[np.argmin(np.abs(np.diff(L)))]
-
-
-            
-            List = np.round(parms[:,1],3).tolist()
-            period_est___ = most_frequent(List)
-            #print("Estimated period is: ",period_est___)
-            
-         
-            Est = parms[0,:]
-            #Est[-1] = periodEst
-            Est[-1] = period_est___
-            hyp = Est
-            hyp_dict = dict(zip(["length_scale","period"],hyp))
-            hyp_dict["variance"] = ystd**2
-            self.set_hyperparameters(hyp_dict)
-
-            
             
             
 
@@ -821,143 +684,12 @@ class GaussianProcessRegressor():
     
 
 
-    def periodicFitByRegular(self):
-        x,y = self._xtrain, self._ytrain
-
-
-
-        x = date2num(x)
-
-
-        hyp = self.p_fit(x,y)
-        hyp_dict = dict(zip(["length_scale","period"],hyp))
-        hyp_dict["variance"] = y.std()**2
-        self.set_hyperparameters(hyp_dict)
-
-
-    def periodicFitByInterSplit(self):
-        x,y = self._xtrain, self._ytrain
-        
-        
-
-        x = date2num(x)
-        x_plus = np.linspace(x[0],  x[-1],x.size*5) 
-        y_plus = np.interp(x_plus, x, y)
-
-        #plt.plot(x_plus,y_plus)
-        #plt.show()
-
-
-        #hyp = self.p_fit(x_plus,y_plus)
-
-        self._xtrain, self._ytrain = x_plus, y_plus
-
-        
-        self.periodicFitBySplit()
-
-        self._xtrain, self._ytrain = x, y
-
-    def periodicFitByInterResampl(self):
-        x,y = self._xtrain, self._ytrain
-        
-        
-
-        x = date2num(x)
-        x_plus = np.linspace(x[0],  x[-1],x.size*5) 
-        y_plus = np.interp(x_plus, x, y)
-
-        #plt.plot(x_plus,y_plus)
-        #plt.show()
-
-
-        #hyp = self.p_fit(x_plus,y_plus)
-
-        self._xtrain, self._ytrain = x_plus, y_plus
-
-        
-        self.periodicFitByResampling()
-
-        self._xtrain, self._ytrain = x, y
     
-    def periodicFitByInterRegular(self):
-        x,y = self._xtrain, self._ytrain
-        
-        
-
-        x = date2num(x)
-        x_plus = np.linspace(x[0],  x[-1],x.size*5) 
-        y_plus = np.interp(x_plus, x, y)
-
-        #plt.plot(x_plus,y_plus)
-        #plt.show()
-
-
-        #hyp = self.p_fit(x_plus,y_plus)
-
-        self._xtrain, self._ytrain = x_plus, y_plus
-
-        
-        self.periodicFitByRegular()
-
-        self._xtrain, self._ytrain = x, y
-        
-
-        #hyp_dict = dict(zip(["length_scale","period"],hyp))
-        #hyp_dict["variance"] = y.std()**2
-        #self.set_hyperparameters(hyp_dict)
 
 
     
 
-
-
-
-
-    def periodicFitBySplit(self):
-        pp = []
-        x,y = self._xtrain, self._ytrain
-
-        x = date2num(x)
-
-        hyp = self.p_fit(x,y)
-
-        L = list()
-        m = 100
-        iteration = 0
-
-        for i in range(m):
-            r = int((i+1)/m*x.size)
-            if r>=100:
-                L.append(self.p_fit(np.linspace(-1,1,r),y[:r])[-1]*r/x.size)
-                iteration= iteration + 1
-
-        periodEst = L[np.argmin(np.abs(np.diff(L)))]
-        #print("number of iteration is : ",iteration)
-
-
-
-        hyp[-1] = round(periodEst,3)
-
         
-
-        hyp_dict = dict(zip(["length_scale","period"],hyp))
-        hyp_dict["variance"] = y.std()**2
-        self.set_hyperparameters(hyp_dict)
-
-    def fitInter(self,method=None):
-        x,y = self._xtrain, self._ytrain
-        
-        
-
-        x = date2num(x)
-        x_plus = np.linspace(x[0],  x[-1],x.size*5) 
-        y_plus = np.interp(x_plus, x, y)
-        self._xtrain, self._ytrain = x_plus, y_plus
-
-
-        self.fit(method)
-        self._xtrain, self._ytrain = x, y
-
 
 
 
@@ -986,61 +718,83 @@ class GaussianProcessRegressor():
 
         if self._kernel.__class__.__name__ == "Periodic":
             if (method is None):
-                if (self._xtrain.size > LARGE_SIZE):
-                    thread_fit(self)
-                else:
-                    thread_interfit(self)
+                #if (self._xtrain.size > LARGE_SIZE):
+                #    thread_fit(self)
+                #else:
+                #    thread_interfit(self)
+                #xtrain_transform, a, b = self.line_transform(xtrain)
+                #self._xtrain = xtrain_transform
+
+
+                hyp_dict_list= thread_fit(self)
+                #print("my print", hyp_dict)
+                p_list = [h["period"] for h in hyp_dict_list]
+                p_list_values = []
+                for pp in p_list:
+                    try:
+                        r = self.log_lh_stable(p,self._sigma_n)
+                        p_list_values.append(r)
+                    except:
+                        p_list_values.append(99999999999999999999999.)
 
 
 
+                #p_list_values = [self.log_lh_stable(p,self._sigma_n) for p in p_list]
+                #p_list_values = [self.log_lh_stable(p) for p in p_list]
 
-            elif method == "default":
-                thread_fit(self)
+                #print("Period list : ", p_list)
+                hyp_dict = hyp_dict_list[np.argmin(p_list_values)]
+
+                try:
+                    res = minimize(self.log_lh_stable, x0 = hyp_dict["period"] , method='Nelder-Mead',options={'maxiter': 100, 'ftol': 1e-7})
+                    #res = minimize(self.log_lh_stable, x0 = .07 , method='Nelder-Mead',options={'maxiter': 100, 'ftol': 1e-5})
+
+                    #p_optimal = np.round(res.x.ravel()[0],3)
+                    p_optimal = res.x.ravel()[0]
+                except LinAlgError:
+                    p_optimal = hyp_dict["period"] 
+                except:
+                    p_optimal = hyp_dict["period"] 
+                
+                hyp_dict["period"] = p_optimal
+
+                #print("Estimated parms ", hyp_dict)
+
+                self.set_hyperparameters(hyp_dict)
+
+
+            #elif method == "default":
+            #    periodicfit(self)
             elif method == "inter":
-                thread_interfit(self)
-            elif method == "s":
-                thread_splitfit(self)
-            elif method == "sinter":
-                thread_intersplitfit(self)
+                hyp_dict_list= thread_interfit(self)
+                #print("my print", hyp_dict)
+                p_list = [h["period"] for h in hyp_dict_list]
+                p_list_values = [self.log_lh_stable(p,self._sigma_n) for p in p_list]
+                #p_list_values = [self.log_lh_stable(p) for p in p_list]
 
-                #self.periodicFitBySplit()
-            elif method == "resample":
-                self.periodicFitByResampling()
-            elif method == "split":
-                self.periodicFitBySplit()
-            elif method == "intersplit":
-                self.periodicFitByInterSplit()
-            elif method == "interresample":
-                self.periodicFitByInterResampl()
-            elif method == "interregular":
-                self.periodicFitByInterRegular()
+                #print("Period list : ", p_list)
+                hyp_dict = hyp_dict_list[np.argmin(p_list_values)]
 
-            elif method == "random":
+                try:
+                    res = minimize(self.log_lh_stable, x0 = hyp_dict["period"] , method='Nelder-Mead',options={'maxiter': 100, 'ftol': 1e-08})
+                    p_optimal = np.round(res.x.ravel()[0],7)
 
-                self.periodicFitByRandomSampling()
+                except LinAlgError:
+                    p_optimal = hyp_dict["period"] 
 
-            elif method == "regular":
-                self.periodicFitByRegular()
+                except:
+                    p_optimal = hyp_dict["period"] 
+                
+                hyp_dict["period"] = p_optimal
 
-            #elif method == "search":
-            #    self.periodicFitBySearch()
+                #print("Estimated parms ", hyp_dict)
 
+                self.set_hyperparameters(hyp_dict)
+            
             else:
                 raise ValueError("Error: '{}' unknown method name.".format(method))
 
 
-
-            #self.fit_periodic(xtrain, ytrain,robust=True,p0=p0)
-            #self._kernel._variance = ytrain.std()
-            #self._kernel.set_length_scale(parmsfit_by_sampling[0])
-           # self._kernel.set_period(parmsfit_by_sampling[1])
-
-           # ls, p, std_noise = periodic_fit(xtrain,ytrain)
-           # #self.get_hyperparameters()
-           # hyparms_ = {"length_scale":ls,"period":p,"variance":stdy**2}
-           # self.set_hyperparameters(hyparms_)
-           # #self._sigma_n = std_noise
-           # self._sigma_n = std_noise * stdy
 
 
         else:
@@ -1067,7 +821,7 @@ class GaussianProcessRegressor():
 
             
             #xtrain_transform, a, b = self.line_transform(xtrain.reshape(-1, 1))
-            xtrain_transform, a, b = self.line_transform(xtrain)
+            xtrain_transform, a, b = self.x_transform()
 
             y_interp = np.interp(x_interp, xtrain_transform, ytrain)
             #y_interp = signal.resample(ytrain,LARGE_SIZE)
@@ -1129,8 +883,6 @@ class GaussianProcessRegressor():
                 self.std_noise = parmsfit_by_sampling[1]*stdy
                 self._kernel._variance = stdy**2
 
-                
-
             # if self._kernel.__class__.__name__ == "Linear":
                 # self._kernel.set_length_scale(parmsfit_by_sampling[0])
                 # self.std_noise = parmsfit_by_sampling[1]
@@ -1138,14 +890,362 @@ class GaussianProcessRegressor():
                 # self._kernel.set_length_scale(parmsfit_by_sampling[0])
                 # self.std_noise = parmsfit_by_sampling[1]
 
+        #xtrain_transform, a, b = self.x_transform()
+        xtrainTransform, a, b = self.x_transform()
 
 
+        self._a = a
+        self._b = b
 
-            #parmsfit_by_sampling = _l[0]
+        #print(self._kernel)
+
+        K_noise = self._kernel.count(
+                    xtrainTransform,
+                    xtrainTransform)
+            
+        #self._K = K_noise.copy()
+
+        #print(self._sigma_n)
+    ############################################# New add
+        np.fill_diagonal(K_noise, K_noise.diagonal() + self._sigma_n**2)
+
+        invK_noise = pdinv(K_noise)
+            
+        self._invK = invK_noise
+
+    ##############################################
+
+        #parmsfit_by_sampling = _l[0]
            
 
 
         #return parmsfit_by_sampling  # ,   y_interp.shape
+
+
+
+
+
+
+
+
+    def simple_predict(self, xtest= None):
+        '''
+        This method allows long term prediction over an xtest position vector (time or space) via GPR model.
+        It will be called when the "predict" method is used. It doesn't need to have updates of new data at regular horizon i.e. (ytest not necessary).
+        '''
+        if xtest is None:
+            xtest = self._xtrain
+
+
+        xtrain, ytrain = self._xtrain, self._ytrain
+
+        #print(type(xtrain))
+        
+        xtrain = date2num(xtrain)
+        xtest = date2num(xtest)
+
+        xtrain = self.x_type(xtrain)
+        ytrain = self.x_type(ytrain)
+        xtest = self.x_type(xtest)
+
+        
+
+        
+
+        meany, stdy = ytrain.mean(), ytrain.std()
+
+        ytrain = (ytrain - meany) / stdy
+
+        #xtrain_transform, a, b = self.line_transform(xtrain)
+        xtrain_transform = self._b * xtrain + self._a
+
+        xtest_transform = self._b  * xtest + self._a 
+
+
+        invK_noise = self._invK
+
+
+        
+
+        Kstar = self._kernel.count(xtest_transform,xtrain_transform)
+        y_pred_test = Kstar.T @ invK_noise @ ytrain
+        
+        ypred = (stdy * y_pred_test + meany)
+        std_stars = self._kernel.count(
+            xtest_transform,
+            xtest_transform).T
+        
+        #print(std_stars.shape)
+
+        std_pred_test = std_stars - Kstar.T @ invK_noise @ Kstar
+
+        #ypred = (stdy * y_pred_test + meany)
+        std_pred_test = np.sqrt(np.abs(std_pred_test.diagonal()))
+
+        return ypred, std_pred_test
+
+
+    def updated_predict(self,xt,yt = None,horizon = 1, ProgressBar  = True):
+        try:
+            horizon = int(horizon)
+        except:
+            raise_message = 'The prediction horizon h = {} must be an integer >= 1.'.format(horizon)
+            raise ValueError(raise_message)
+
+
+
+        copy_self = copy(self)
+        if yt is None:
+            ypred,ypred_std =  copy_self.simple_predict(xt)
+        else:
+            chunks_xt = [xt[h:h + horizon] for h in range(0, len(xt), horizon)]
+            chunks_yt = [yt[h:h + horizon] for h in range(0, len(yt), horizon)]
+            
+            ypred,ypred_std = [],[]
+
+            if ProgressBar:
+                for ii in tqdm(range(len(chunks_xt))):
+                    chunks_ypred, chunks_ypred_std = copy_self.simple_predict(chunks_xt[ii])
+
+                    ypred.extend(chunks_ypred)
+                    ypred_std.extend(chunks_ypred_std)
+
+                    if (ii < len(chunks_yt) -1):
+                    #if ii < len(chunks_yt):
+                        if horizon>1:
+                            for w in range(horizon):
+                                data = {'x_update' : chunks_xt[ii][w:w+1], 'y_update' : chunks_yt[ii][w:w+1]}
+                                copy_self.update(**data)
+                        elif horizon == 1:
+                                data = {'x_update' : chunks_xt[ii], 'y_update' : chunks_yt[ii]}
+                                copy_self.update(**data)
+                        else:
+                            raise_message = 'The prediction horizon h = {} must be no zero.'.format(horizon)
+                            raise ValueError(raise_message)
+
+            else:   
+                for ii in (range(len(chunks_xt))):
+                    chunks_ypred, chunks_ypred_std = copy_self.simple_predict(chunks_xt[ii])
+
+                    ypred.extend(chunks_ypred)
+                    ypred_std.extend(chunks_ypred_std)
+
+                    if (ii < len(chunks_yt) -1):
+                    #if ii < len(chunks_yt):
+                        if horizon>1:
+                            for w in range(horizon):
+                                data = {'x_update' : chunks_xt[ii][w:w+1], 'y_update' : chunks_yt[ii][w:w+1]}
+                                copy_self.update(**data)
+                        elif horizon == 1:
+                                data = {'x_update' : chunks_xt[ii], 'y_update' : chunks_yt[ii]}
+                                copy_self.update(**data)
+                        else:
+                            raise_message = 'The prediction horizon h = {} must be no zero.'.format(horizon)
+                            raise ValueError(raise_message)
+                            #raise ValueError(raise_message)
+                    
+            
+            ypred,ypred_std = np.array(ypred), np.array(ypred_std)
+        
+        return ypred,ypred_std
+    
+    
+    
+
+    
+
+        
+    def single_update(self, x_update, y_update, method = None):
+
+
+        if self._kernel.label() in ['Periodic','Linear','Polynomial']:
+            pass
+        else:
+            if method is None:
+                method = 'sliding'
+
+
+        
+            x_train, y_train = self._xtrain, self._ytrain
+
+            if x_update not in x_train:
+                x_train_num = date2num(x_train)
+                xt0 = x_update
+                yt0 = y_update
+                xt = date2num(xt0)
+                
+                
+
+                
+
+                x_train_num = self.x_type(x_train_num)
+                y_train = self.x_type(y_train)
+                xt = self.x_type(xt)
+                yt = self.x_type(yt0)
+                
+
+                meany, stdy = y_train.mean(), y_train.std()
+
+                y_train = (y_train - meany) / stdy
+                yt = (yt - meany) / stdy
+
+               
+                #xtrain_transform, a, b = self.line_transform(x_train_num)
+                xtest_transform = self._b * xt + self._a
+                xtrain_transform = self._b * x_train_num + self._a
+                
+                
+                invK = self._invK
+                x = self._kernel.count(xtest_transform, xtrain_transform)
+                r = self._kernel.count(xtest_transform, xtest_transform)
+                
+                invK = inv_col_add_update(invK, x, r + self._sigma_n**2)
+                    
+                if method == 'sliding':
+                    if isinstance(self._xtrain, pd.DatetimeIndex):
+                        self._xtrain = pd.DatetimeIndex.union(self._xtrain[1:], x_update)
+                    else:
+                        self._xtrain = np.hstack((self._xtrain[1:], x_update))
+                    self._ytrain =np.hstack((self._ytrain[1:] , y_update))
+                    self._invK = inv_col_pop_update(invK,0)
+                elif method == 'concat':
+                    if isinstance(self._xtrain, pd.DatetimeIndex):
+                        self._xtrain = pd.DatetimeIndex.union(self._xtrain, x_update)
+                    else:
+                        self._xtrain = np.hstack((self._xtrain, x_update))
+                    
+                    self._ytrain =np.hstack((self._ytrain , y_update))
+                    self._invK  = invK 
+                else:
+                    raise ValueError(f"Not defined {method} method")
+            else:
+                pass
+
+
+    def singleUpdate(self, x_update, y_update, method = None):
+
+
+        if self._kernel.label() in ['Periodic','Linear','Polynomial']:
+            pass
+        else:
+            if method is None:
+                method = 'sliding'
+
+
+        
+            x_train, y_train = self._xtrain, self._ytrain
+
+            if x_update not in x_train:
+                x_train_num = date2num(x_train)
+                xt0 = x_update
+                yt0 = y_update
+                xt = date2num(xt0)
+                
+                
+
+                
+
+                x_train_num = self.x_type(x_train_num)
+                y_train = self.x_type(y_train)
+                xt = self.x_type(xt)
+                yt = self.x_type(yt0)
+                
+
+                meany, stdy = y_train.mean(), y_train.std()
+
+                y_train = (y_train - meany) / stdy
+                yt = (yt - meany) / stdy
+
+               
+                #xtrain_transform, a, b = self.line_transform(x_train_num)
+                xtest_transform = self._b * xt + self._a
+                xtrain_transform = self._b * x_train_num + self._a
+                
+                
+                invK = self._invK
+                x = self._kernel.count(xtest_transform, xtrain_transform)
+                r = self._kernel.count(xtest_transform, xtest_transform)
+                
+                invK = inv_col_add_update(invK, x, r + self._sigma_n**2)
+                    
+                if method == 'sliding':
+                    if isinstance(self._xtrain, (pd.DatetimeIndex)):
+                        #self._xtrain = pd.DatetimeIndex.union(self._xtrain[1:], x_update)
+                        self._xtrain = self._xtrain[1:].insert(len(self._xtrain[1:]),x_update)
+                    elif isinstance(self._xtrain, pd.Series):
+                        self._xtrain = self._xtrain[1:].append(pd.Series(x_update), ignore_index = True)
+                    else:
+                        self._xtrain = np.hstack((self._xtrain[1:], x_update))
+                    self._ytrain =np.hstack((self._ytrain[1:] , y_update))
+                    self._invK = inv_col_pop_update(invK,0)
+
+                elif method == 'concat':
+                    if isinstance(self._xtrain, (pd.DatetimeIndex)):
+                        #self._xtrain = pd.DatetimeIndex.union(self._xtrain, x_update)
+                        self._xtrain = self._xtrain[1:].insert(len(self._xtrain),x_update)
+                    elif isinstance(self._xtrain, pd.Series):
+                        self._xtrain = self._xtrain.append(pd.Series(x_update), ignore_index = True)
+                    else:
+                        self._xtrain = np.hstack((self._xtrain, x_update))
+                    
+                    self._ytrain =np.hstack((self._ytrain , y_update))
+                    self._invK  = invK 
+                else:
+                    raise ValueError(f"Not defined {method} method")
+            else:
+                pass
+
+
+    def update(self,x_update, y_update,method = None):
+            if (isinstance(x_update,pd.Series) & isinstance(y_update,pd.Series)):
+                data = [{'x_update':x_update.iloc[u],'y_update':y_update.iloc[u]} for u in range(len(y_update))]
+            elif (isinstance(x_update,pd.Series) & isinstance(y_update,np.ndarray)):
+                data = [{'x_update':x_update.iloc[u],'y_update':y_update[u]} for u in range(len(y_update))]
+            elif (isinstance(y_update,pd.Series) & isinstance(x_update,np.ndarray)):
+                data = [{'x_update':x_update[u],'y_update':y_update.iloc[u]} for u in range(len(y_update))]
+            elif (isinstance(x_update,np.ndarray) & isinstance(y_update,np.ndarray)):
+                data = [{'x_update':x_update[u],'y_update':y_update[u]} for u in range(len(y_update))]
+            elif (isinstance(x_update,pd.DatetimeIndex) & isinstance(y_update,np.ndarray)):
+                data = [{'x_update':x_update[u],'y_update':y_update[u]} for u in range(len(y_update))]
+            elif (isinstance(x_update,pd.DatetimeIndex) & isinstance(y_update,pd.Series)):
+                data = [{'x_update':x_update[u],'y_update':y_update.iloc[u]} for u in range(len(y_update))]
+            else:
+                #raise ValueError('unknown format!!!!')
+                data = [{'x_update':x_update,'y_update':y_update}]
+
+            for d in data:
+                self.singleUpdate(**d,method=method)
+        
+        
+
+
+
+    #def  update(self, x_update, y_update, method = None):
+    #    self.single_update(x_update, y_update, method)
+
+        # if np.isscalar(x_update):
+        #     self.single_update(x_update, y_update, method)
+        # elif isinstance(x_update,pd._libs.tslibs.timestamps.Timestamp):
+        #     self.single_update(x_update, y_update, method)
+        # else:
+        #     for k in range(len(x_update)):
+        #         try:
+        #             self.single_update(x_update.iloc[k], y_update.iloc[k], method)
+        #         except:
+        #             self.single_update(x_update[k], y_update[k], method)
+
+            
+
+            
+
+
+    @staticmethod
+    def softmax(x):
+        e_x = np.exp(x)
+        return e_x / e_x.sum()
+
+
+    
 
     def predict_periodic(self, xtest):
         '''
@@ -1170,9 +1270,12 @@ class GaussianProcessRegressor():
         #xtrain_transform, a, b = self.line_transform(
         #    xtrain.reshape(-1, 1))
 
-        xtrain_transform, a, b = self.line_transform(xtrain)
+        #xtrain_transform, a, b = self.x_transform(xtrain)
 
-        xtest_transform = b * xtest + a
+        xtrain_transform = self._b * xtrain + self._a
+
+
+        xtest_transform = self._b * xtest + self._a
 
         K_noise = self._kernel.count(
                     xtrain_transform,
@@ -1222,7 +1325,7 @@ class GaussianProcessRegressor():
 
         if self._kernel.__class__.__name__ == "Periodic":
 
-            (ypred, std_pred_test) = self.predict_periodic(xtrain, ytrain, xtest)
+            (ypred, std_pred_test) = self.predict_periodic( xtest)
         else:
 
             meany, stdy = ytrain.mean(), ytrain.std()
@@ -1231,17 +1334,33 @@ class GaussianProcessRegressor():
             ytrain = (ytrain - meany) / stdy
 
             #xtrain_transform, a, b = self.line_transform(xtrain.reshape(-1, 1))
-            xtrain_transform, a, b = self.line_transform(xtrain)
+            #xtrain_transform, a, b = self.line_transform(xtrain)
 
-            xtest_transform = b * xtest + a
+            #xtest_transform = b * xtest + a
 
-            K_noise = self._kernel.count(
-                    xtrain_transform,
-                    xtrain_transform)
+            xtrain_transform = self._b * xtrain + self._a
 
-            np.fill_diagonal(K_noise, K_noise.diagonal() + self._sigma_n**2)
 
-            invK_noise = pdinv(K_noise)
+            xtest_transform = self._b * xtest + self._a
+
+            
+
+            ################## NEW ###########################
+           # K_noise = self._kernel.count(
+            #        xtrain_transform,
+            #        xtrain_transform)
+
+            #self._K = K_noise.copy()
+
+            #np.fill_diagonal(K_noise, K_noise.diagonal() + self._sigma_n**2)
+
+            #invK_noise = pdinv(K_noise)
+            
+            #self._invK = invK_noise
+
+            ################## NEW ###########################
+            invK_noise = self._invK
+
 
             
 
@@ -1259,7 +1378,7 @@ class GaussianProcessRegressor():
 
             std_pred_test = std_stars - Kstar.T @ invK_noise @ Kstar
 
-            ypred = (stdy * y_pred_test + meany)
+            #ypred = (stdy * y_pred_test + meany)
 # a verifier l'expression de variance ici
             std_pred_test = np.sqrt(std_pred_test.diagonal())
 
@@ -1268,6 +1387,41 @@ class GaussianProcessRegressor():
     
 
   
+    def linear_predict(self):
+        class_names = ['Linear', 'NonLinear']
+        url = kernel2url('linear_kernel_predict')
+        y = self._ytrain
+        y_resampled = resample(y,300)
+        y_sd = (y_resampled - y_resampled.mean())/y_resampled.std()
+        #print(y_sd.shape)
+        data = {"inputs":y_sd.reshape(1,-1).tolist()}
+        response = requests.post(url, data=json.dumps(data))
+        #print(response)
+
+        values = np.array(response.json()["outputs"][0])
+        pred_test = np.argmax(values)
+        decision = class_names[pred_test]
+        return decision, self.softmax(values)
+    
+
+    def periodic_predict(self):
+        class_names_periodic = ['NonPeriodic', 'Periodic']
+
+        url = kernel2url('periodic_kernel_predict')
+
+        y = self._ytrain
+        f = interpolate.interp1d(np.linspace(-1,1,y.size), y)
+        xnew = np.linspace(-1,1,SMALL_SIZE)
+        ynew = f(xnew)
+        y_sd = (ynew - ynew.mean())/ynew.std()
+        data = {"inputs":y_sd.reshape(1,-1).tolist()}
+        response = requests.post(url, data=json.dumps(data))
+        #print(response)
+
+        values = np.array(response.json()["outputs"][0])
+        pred_test = np.argmax(values)
+        decision = class_names_periodic[pred_test]
+        return decision, self.softmax(values)
 
 
 
@@ -1310,10 +1464,17 @@ class GaussianProcessRegressor():
         #xtrain_transform, a, b = self.line_transform(
         #    x_train.reshape(-1, 1))
 
-        xtrain_transform, a, b = self.line_transform(x_train)
+        #xtrain_transform, a, b = self.line_transform(x_train)
 
 
-        xtest_transform = b * xt + a
+        #xtest_transform = b * xt + a
+
+        xtrain_transform = self._b * x_train + self._a
+
+
+        xtest_transform = self._b * xt + self._a
+
+
         n = xt.size
 
         res = []
@@ -1324,15 +1485,16 @@ class GaussianProcessRegressor():
         #K = self._kernel.count(xtrain_transform, xtrain_transform) + \
         #    self._sigma_n**2 * np.eye(xtrain_transform.size)
 
-        K = self._kernel.count(
-                    xtrain_transform,
-                    xtrain_transform)
+        #K = self._kernel.count(
+        #            xtrain_transform,
+         #           xtrain_transform)
 
-        np.fill_diagonal(K, K.diagonal() + self._sigma_n**2)
+        #np.fill_diagonal(K, K.diagonal() + self._sigma_n**2)
 
 
 
-        invK = pdinv(K)
+        #invK = pdinv(K)
+        invK = self._invK
         # cprint("Gaussian Process prediction in progress ...".upper(), 'green')
         # message = "prediction started ..."
 
@@ -1457,7 +1619,7 @@ class GaussianProcessRegressor():
             # std_pred = std_pred.tolist()
             y_pred, std_pred = np.array(res), np.array(std_pred)
 
-        elif self._kernel.__class__.__name__ in ["Linear","Polynomial"]:
+        elif self._kernel.__class__.__name__ in ["Linear"]:
 
             (res, std_pred) = self.mean_predict(xt)
             y_pred, std_pred = np.array(res), np.array(std_pred)
