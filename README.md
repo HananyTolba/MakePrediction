@@ -98,6 +98,18 @@ model.fit()
 model.predict(xtest)
 model.plotly(ytest)
 ```
-
 <img src="assets/model_predict.png" alt="makeprediction logo" width="600px"/>
+
+
+```python
+
+#Online prediction with update
+ypred = []
+for i in range(xtest.size):
+    yp,_ = model.predict(xtest[i],return_value = True)
+    ypred.append(yp)
+    data = {'x_update': xtest[i], 'y_update': ytest[i],}
+    model.update(**data)
+```
+<img src="assets/fig_pred.png" alt="makeprediction logo" width="600px"/>
 
