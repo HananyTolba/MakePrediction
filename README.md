@@ -98,7 +98,7 @@ model.fit()
 model.predict(xtest)
 model.plotly(ytest)
 ```
-<img src="assets/model_predict.png" alt="makeprediction logo" width="700px"/>
+<img src="assets/model_predict.png" alt="makeprediction logo"/>
 
 
 ```python
