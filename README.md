@@ -234,4 +234,4 @@ INFO:werkzeug:127.0.0.1 - - [18/Feb/2021 14:22:51] "POST /_dash-update-component
 
 Demo
 ---------
-All the files of this demo are in the 'demos' directory.
+All  files of this demo are in the 'demos' directory.

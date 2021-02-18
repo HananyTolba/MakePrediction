@@ -1546,7 +1546,7 @@ class QuasiGPR():
         
         
         logo = dbc.Col(dbc.CardImg(
-                            src="/assets/mp_logo_orange.png",style={"width": "6rem"},
+                            src="/assets/logo.png",style={"width": "6rem"},
                             top=True,))
         
         app.layout = html.Div([dbc.Row([html.Div(logo,style = style_logo_left),dbc.Col(html.Div(html.H1("MakePrediction DashBoard", style = {"color":'#d35400',}),
@@ -1709,8 +1709,7 @@ class QuasiGPR():
             
             fig.update_xaxes({'title':'date'})
             fig.update_yaxes({'title':'value'})
-            fig.update_layout(#title='Dates are pandas timestamps',
-                              #yaxis_title='AAPL Stock',
+            fig.update_layout(
                               shapes = [dict(x0=linedate, x1=linedate, y0=0, y1=1, xref='x', yref='paper',line_width=1,line=dict(
             color="green",
             width=.5,

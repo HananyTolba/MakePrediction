@@ -75,8 +75,12 @@ model.save(model_path)
 # %%
 #serving the saved_model 
 #################################
-# execute realtime_db.py before executing the following cells. 
-saved_model.deploy2dashbord('live_db.csv')
+# execute realtime_db.py before executing the following cells.
+
+loaded_model = qgpr()
+loaded_model = loaded_model.load(model_path)
+ 
+loaded_model.deploy2dashbord('live_db.csv')
 
 #We can change the prediction horizon :
 ###  for example :  saved_model.deploy2dashbord('live_db.csv',prediction_horizon = 3)

@@ -5,6 +5,7 @@ from makeprediction.invtools import date2num
 
 
 def rtts(function, step = 1, filename = None):
+    
     fieldnames = ["date", "value"]
 
     if filename is None:
