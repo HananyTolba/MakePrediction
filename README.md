@@ -27,9 +27,11 @@ the *sparse* context and the automatic online update of prediction.
 * Modelling and analysis time series.
 
 * Automatic time-series prediction (forecasting) using Gaussian processes model.
-* Deploy on prediction the fitted (or saved) makeprediction model.
+* Deploy on production the fitted (or saved) makeprediction model.
 
 ### Applications:
+* Energy consumption prediction. 
+* Energy demand prediction.
 * Stock price prediction.
 * Stock market prediction.
 

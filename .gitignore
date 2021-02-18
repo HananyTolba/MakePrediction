@@ -1,7 +1,19 @@
+
+
+
+.DS_Store
+
+time_series_generation/
+__pycache__/
+
+.pytest_cache
+.ipynb_checkpoints
+
+
 makeprediction/kernel_local.py
-makeprediction/kernel_ignore.py
 makeprediction/__kernels__.py
 
-makeprediction/timer.py
+makeprediction/gp_copie_31122020.py
+
 *.log
 
