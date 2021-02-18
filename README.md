@@ -98,7 +98,7 @@ model.fit()
 model.predict(xtest)
 model.plotly(ytest)
 ```
-<img src="assets/model_predict.png" alt="makeprediction logo"/>
+<img src="assets/fig2.svg" alt="makeprediction logo" width="700px"/>
 
 
 ```python
@@ -119,9 +119,8 @@ plt.figure(figsize = (10,5))
 plt.plot(xtest,ytest,'b', label ='Test')
 plt.plot(xtest,ypred,'r',label='Prediction')
 plt.legend()
-plt.savefig('fig_pred.png', dpi=300)
 ```
-<img src="assets/fig_pred.png" alt="makeprediction logo" width="700px"/>
+<img src="assets/fig_pred.svg" alt="makeprediction logo" width="700px"/>
 
 The previous prediction with updating, can be obtained simply by the "predict" method as follows:
 
@@ -131,7 +130,7 @@ model.predict(xtest,ytest[:-1])
 #And ploly 
 model.plotly(ytest)
 ```
-<img src="assets/model_predict_with_update.png" alt="makeprediction logo" width="700px"/>
+<img src="assets/fig3.svg" alt="makeprediction logo" width="700px"/>
 
 ```python
 # Errors of prediction
