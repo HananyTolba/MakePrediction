@@ -232,5 +232,6 @@ INFO:werkzeug:127.0.0.1 - - [18/Feb/2021 14:22:51] "POST /_dash-update-component
 
 <img src="assets/Screenshot.png" alt="makeprediction logo" width="700px"/>
 
-
-
+Demo
+---------
+All the files of this demo are in the 'demos' directory.
