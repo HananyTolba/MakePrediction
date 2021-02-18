@@ -144,3 +144,74 @@ model.score(ytest)
   'R2': 0.9816696384584944}}
 ```
 
+Save the model:
+------------------
+```python
+
+model_path = 'saved_model'
+model.save(model_path)
+```
+
+
+
+
+
+
+
+Deployement of makeprediction model
+=========================================
+
+Now we are going to simulate the behavior of data that arrives continuously  in realtime  and stored in a database. 
+We will create a 'csv' file named 'live_db.csv' that automatically grows every 3 seconds with a new line.
+
+Create a 'realtime_db.py' file and copy the following code into it  
+
+```python
+from makeprediction.ts_generation import rtts
+import numpy as np
+def func(t):
+    f_t  = 100*np.sin(2*np.pi*t/500)*np.sin(2*np.pi*t/3003)  + 500  + 7*np.random.randn(1)[0]
+    return f_t
+
+if '__main__' == __name__:
+    rtts(function = func,step = 3,filename = 'live_db.csv')
+```
+
+
+You can notice that the function 'func' is the same as the one that generates the time series that we have noted "f".
+
+Now in a terminal type:
+```bash
+python realtime_db.py 
+```
+or 
+```bash
+python3 realtime_db.py 
+```
+or in a new Jupyter notepad
+
+```jupyter-notebook
+!python realtime_db.py 
+```
+according to your preference  
+
+Load the model
+--------------------
+
+```python
+from makeprediction.quasigp import QuasiGPR as qgpr
+model_path = 'saved_model'
+#load the model
+loaded_model = qgpr()
+loaded_model = loaded_model.load(model_path)
+```
+
+Deployement
+---------------
+```python
+
+loaded_model.deploy2dashbord('live_db.csv')
+```
+<img src="assets/Screenshot.png" alt="makeprediction logo" width="700px"/>
+
+
