@@ -85,7 +85,7 @@ xtest,ytest = x[trainSize:], y[trainSize:]
 model = qgpr(xtrain,ytrain, RBF()) 
 model.plotly()
 ```
-<img src="assets/model.png" alt="makeprediction logo" width="700px"/>
+<img src="assets/fig1.svg" alt="makeprediction logo" width="700px"/>
 
 ```python
 #fit the model
