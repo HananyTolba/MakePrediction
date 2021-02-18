@@ -1,4 +1,4 @@
-numpy<1.19.0,>=1.16.0
+numpy
 colorama
 tqdm
 termcolor
@@ -7,3 +7,7 @@ requests
 joblib
 matplotlib
 pandas
+pytest
+plotly
+dash
+dash-bootstrap-components

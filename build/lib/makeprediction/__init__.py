@@ -4,12 +4,14 @@
 
 from makeprediction import kernels
 from makeprediction import gp
+from makeprediction import quasigp
 from makeprediction import invtools
-
+from makeprediction import thread_api
 from makeprediction import version 
+from makeprediction import url 
 
-__all__ = ["gp","kernels","invtools","quasigp",
-]
+
+__all__ = ["gp","kernels","invtools","quasigp","thread_api",'url']
 
 
 __author__ = version.__author__
