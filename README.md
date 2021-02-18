@@ -51,3 +51,29 @@ the *sparse* context and the automatic online update of prediction.
 
 * pip install .
 
+Example
+==========================
+
+Here is a simple example to(Python 3):
+
+```python
+from makeprediction.quasigp import QuasiGPR as qgpr
+from makeprediction.invtools import date2num
+from makeprediction.kernels import *
+import datetime
+import pandas as pd
+import numpy as np
+
+def fib(n: int) -> Iterator[int]:
+    a, b = 0, 1
+    while a < n:
+        yield a
+        a, b = b, a + b
+
+        
+f = lambda dt:  100*np.sin(2*np.pi*dt/500)*np.sin(2*np.pi*dt/3003)  + 500  
+x = pd.date_range(start = datetime.datetime(2021,1,1), periods=1000, freq = '3s' )
+time2num = date2num(x)
+
+y = f(time2num) + 7*np.random.randn(x.size)
+

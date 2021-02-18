@@ -1212,10 +1212,15 @@ class QuasiGPR():
 
                 for mdl in models:
                     #print("step --> {} ...".format(mdl._kernel.label()))
+                    
                     if yt is not None:
-                        if ProgressBar:
-                            print('the {}-th step --> ...'.format(step).center(50))
-                            step += 1
+                        if mdl._kernel.label() in ['Periodic','Polynomial','Linear']:
+                            ProgressBar = False
+                        else:
+                            ProgressBar = True
+                        #if ProgressBar:
+                        #    print('the {}-th step --> ...'.format(step).center(50))
+                        #    step += 1
 
                     #yt_pred, yt_std = mdl.predict(xt,yt,horizon, option, sparse, sparse_size)
                     yt_pred, yt_std = mdl.updated_predict(xt,yt,horizon, ProgressBar)
