@@ -997,7 +997,7 @@ class QuasiGPR():
         #if max_periodic is None:
          #   max_periodic = 5
         if  stationary_kernel is None:
-             stationary_kernel = 'Matern32'
+             stationary_kernel = 'RBF'
         
         models = []
         comp = []
@@ -1084,7 +1084,7 @@ class QuasiGPR():
         if max_periodic is None:
             max_periodic = 2
         if stationary_kernel is None:
-            stationary_kernel = 'Matern32'
+            stationary_kernel = 'RBF'
 
         if self._kernel is None:
             return self.autofit(max_periodic,  stationary_kernel)

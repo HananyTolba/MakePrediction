@@ -2,11 +2,11 @@ Metadata-Version: 2.1
 Name: makeprediction
 Version: 2.0.0
 Summary: Fast and easy gaussian process regression for time series prediction
-Home-page: https://github.com/hananytolba
+Home-page: https://github.com/HananyTolba/MakePrediction.git
 Author: Hanany Tolba
 Author-email: hananytolba@yahoo.com
 License: GPLv3
-Download-URL: https://github.com/hananytolba
+Download-URL: https://github.com/HananyTolba/MakePrediction.git
 Description: 
         <!-- ![alt text](assets/logo.png)
          -->
@@ -182,7 +182,7 @@ Description:
             f_t  = 100*np.sin(2*np.pi*t/500)*np.sin(2*np.pi*t/3003)  + 500  + 7*np.random.randn(1)[0]
             return f_t
         
-        if '__main__' == __name__:
+        if __name__ == '__main__':
             rtts(function = func,step = 3,filename = 'live_db.csv')
         ```
         
@@ -255,6 +255,7 @@ Classifier: Operating System :: OS Independent
 Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: 3.7
 Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
 Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
 Requires-Python: >=3.5
 Description-Content-Type: text/markdown
