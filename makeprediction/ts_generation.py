@@ -4,9 +4,10 @@ import datetime
 from makeprediction.invtools import date2num
 
 
-def rtts(function, step = 1, filename = None):
+def rtts(function, step = 1, filename = None, fieldnames = None):
     
-    fieldnames = ["date", "value"]
+    if fieldnames is None:
+        fieldnames = ["date", "value"]
 
     if filename is None:
         filename = 'data_ts.csv'
