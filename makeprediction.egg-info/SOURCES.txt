@@ -9,6 +9,7 @@ makeprediction/invtools.py
 makeprediction/kernels.py
 makeprediction/quasigp.py
 makeprediction/thread_api.py
+makeprediction/ts_generation.py
 makeprediction/url.py
 makeprediction/version.py
 makeprediction.egg-info/PKG-INFO
@@ -16,6 +17,8 @@ makeprediction.egg-info/SOURCES.txt
 makeprediction.egg-info/dependency_links.txt
 makeprediction.egg-info/requires.txt
 makeprediction.egg-info/top_level.txt
+makeprediction/assets/.DS_Store
+makeprediction/assets/logo.png
 makeprediction/tests/__init__.py
 makeprediction/tests/test_gpr.py
 makeprediction/tests/test_inv.py

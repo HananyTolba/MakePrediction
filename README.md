@@ -173,7 +173,7 @@ def func(t):
     f_t  = 100*np.sin(2*np.pi*t/500)*np.sin(2*np.pi*t/3003)  + 500  + 7*np.random.randn(1)[0]
     return f_t
 
-if '__main__' == __name__:
+if __name__ == '__main__':
     rtts(function = func,step = 3,filename = 'live_db.csv')
 ```
 

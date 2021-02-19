@@ -1212,10 +1212,15 @@ class QuasiGPR():
 
                 for mdl in models:
                     #print("step --> {} ...".format(mdl._kernel.label()))
+                    
                     if yt is not None:
-                        if ProgressBar:
-                            print('the {}-th step --> ...'.format(step).center(50))
-                            step += 1
+                        if mdl._kernel.label() in ['Periodic','Polynomial','Linear']:
+                            ProgressBar = False
+                        else:
+                            ProgressBar = True
+                        #if ProgressBar:
+                        #    print('the {}-th step --> ...'.format(step).center(50))
+                        #    step += 1
 
                     #yt_pred, yt_std = mdl.predict(xt,yt,horizon, option, sparse, sparse_size)
                     yt_pred, yt_std = mdl.updated_predict(xt,yt,horizon, ProgressBar)
@@ -1461,9 +1466,9 @@ class QuasiGPR():
                 #d=datetime.datetime.now()
                 #dround = d - datetime.timedelta(microseconds=d.microsecond)
                 if t1>t0:
-                    model_copy.update(df.date,df.value.values)
+                    model_copy.update(df[xname],df[yname].values)
 
-                    dround = df.date.iloc[-1] + freq
+                    dround = df[xname].iloc[-1] + freq
                     #dround = df.date.iloc[-1].replace(microsecond=0)
 
                     future = pd.date_range(start = dround ,periods = horizon, freq = freq)
@@ -1533,7 +1538,14 @@ class QuasiGPR():
                                 'content': 'width=device-width, initial-scale=1.0'}]
                     )
 
-        df = pd.DataFrame(columns=['date', 'value'])
+
+        #columns_df = realtime_db
+
+        df_realtime = pd.read_csv(realtime_db)
+        colNames = df_realtime.columns[:2]
+        xname, yname = colNames[0], colNames[1]
+        df = pd.DataFrame(columns=[xname, yname])
+
         df_pred = pd.DataFrame(columns=['date', 'ypred','ypred_std'])
 
         df_pred_horizon = pd.DataFrame(columns=['date', 'ypred_horizon','ypred_std_horizon'])
@@ -1541,7 +1553,7 @@ class QuasiGPR():
         
         
         logo = dbc.Col(dbc.CardImg(
-                            src="/assets/mp_logo_orange.png",style={"width": "6rem"},
+                            src="/assets/logo.png",style={"width": "6rem"},
                             top=True,))
         
         app.layout = html.Div([dbc.Row([html.Div(logo,style = style_logo_left),dbc.Col(html.Div(html.H1("MakePrediction DashBoard", style = {"color":'#d35400',}),
@@ -1557,7 +1569,7 @@ class QuasiGPR():
                 id='graphid',
                 figure={
                     'data': [
-                        go.Scatter(x=df['date'], y=df['value'], mode = 'lines+markers')
+                        go.Scatter(x=df[xname], y=df[yname], mode = 'lines+markers')
                     ],
                     'layout': {
                         'title': 'MakePrediction',
@@ -1607,20 +1619,24 @@ class QuasiGPR():
             else:
                 path_db = realtime_db
                 df = pd.read_csv(path_db)
-                df.date = pd.to_datetime(df.date)
+                df[xname] = pd.to_datetime(df[xname])
                
             path_db_pred = db_deploy
             df_pred = pd.read_csv(path_db_pred)
             df_pred.future = pd.to_datetime(df_pred.future)
+
             f,yp,yp_std = df_pred.iloc[prediction_horizon - 1]
             if f not in df_pred_horizon['date'].values:
                 df_pred_horizon.loc[n] = [f,yp,yp_std]
                 df_pred_horizon.to_csv(filename,  index=False)
-            intersect_df = pd.merge(df, df_pred_horizon, how='inner', on='date')
+            #intersect_df = pd.merge(df, df_pred_horizon, how='inner', on='date')
+            intersect_df = pd.merge(df, df_pred_horizon, how='inner', left_on=[xname], right_on=['date'])
+
+            
             
             rmse = lambda predictions,targets: np.sqrt(np.mean((predictions-targets)**2))
             
-            RMSE = rmse(intersect_df.value,intersect_df.ypred_horizon)  
+            RMSE = rmse(intersect_df[yname],intersect_df.ypred_horizon)  
             
             if len(self._score)==2: 
                 title = f'RMSE errors (train/test/realtime_test): {round(RMSE_train,3)}/{round(RMSE_test,3)}/{round(RMSE,3)}'
@@ -1630,7 +1646,7 @@ class QuasiGPR():
             if realtime_db is None:
                 pass
             else:
-                trace1 = go.Scatter(x=df['date'], y=df['value'], mode = 'lines+markers',
+                trace1 = go.Scatter(x=df[xname], y=df[yname], mode = 'lines+markers',
                                   line_color = 'rgb(0,0,0)',
                                     
                                name='Realtime data streaming')
@@ -1668,7 +1684,7 @@ class QuasiGPR():
                                 showlegend=True,
 
                             )
-            linedate = df.date.iloc[-1]
+            linedate = df[xname].iloc[-1]
             now = datetime.datetime.now()
             
             if realtime_db is None:
@@ -1702,10 +1718,9 @@ class QuasiGPR():
 
             
             
-            fig.update_xaxes({'title':'date'})
-            fig.update_yaxes({'title':'value'})
-            fig.update_layout(#title='Dates are pandas timestamps',
-                              #yaxis_title='AAPL Stock',
+            fig.update_xaxes({'title':xname})
+            fig.update_yaxes({'title':yname})
+            fig.update_layout(
                               shapes = [dict(x0=linedate, x1=linedate, y0=0, y1=1, xref='x', yref='paper',line_width=1,line=dict(
             color="green",
             width=.5,
