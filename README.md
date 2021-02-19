@@ -235,7 +235,7 @@ INFO:werkzeug:127.0.0.1 - - [18/Feb/2021 14:22:51] "POST /_dash-update-component
 <img src="assets/Capture_2.png" alt="makeprediction logo" width="1000px"/>
 
 * Video 
-<iframe  src="/assets/Enregistrement. mov" frameborder="0" allowfullscreen></iframe>
+<iframe  src="/assets/Enregistrement .mov" frameborder="0" allowfullscreen></iframe>
 
 Demo
 ---------
