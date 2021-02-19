@@ -56,8 +56,8 @@ setup(
     long_description_content_type='text/markdown',                 # Type in your name
     author_email=__email__,
     # Provide either the link to your github or to your website
-    url='https://github.com/hananytolba',
-    download_url='https://github.com/hananytolba',    # I explain this later on
+    url='https://github.com/HananyTolba/MakePrediction.git',
+    download_url='https://github.com/HananyTolba/MakePrediction.git',    # I explain this later on
     keywords=[
         'Gaussian Process Regression',
         'Time series prediction',
