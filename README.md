@@ -230,9 +230,9 @@ INFO:werkzeug:127.0.0.1 - - [18/Feb/2021 14:22:51] "POST /_dash-update-component
 ```
 
 
-<img src="assets/Capture d’écran 2021-02-19 à 01.31.58" alt="makeprediction logo" width="1000px"/>
+<img src="assets/Capture_1.png" alt="makeprediction logo" width="1000px"/>
 
-<img src="assets/Capture d’écran 2021-02-19 à 01.44.50" alt="makeprediction logo" width="1000px"/>
+<img src="assets/Capture_2.png" alt="makeprediction logo" width="1000px"/>
 
 Demo
 ---------
