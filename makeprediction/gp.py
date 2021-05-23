@@ -718,13 +718,7 @@ class GaussianProcessRegressor():
 
         if self._kernel.__class__.__name__ == "Periodic":
             if (method is None):
-                #if (self._xtrain.size > LARGE_SIZE):
-                #    thread_fit(self)
-                #else:
-                #    thread_interfit(self)
-                #xtrain_transform, a, b = self.line_transform(xtrain)
-                #self._xtrain = xtrain_transform
-
+               
 
                 hyp_dict_list= thread_fit(self)
                 #print("my print", hyp_dict)
@@ -735,7 +729,7 @@ class GaussianProcessRegressor():
                         r = self.log_lh_stable(p,self._sigma_n)
                         p_list_values.append(r)
                     except:
-                        p_list_values.append(99999999999999999999999.)
+                        p_list_values.append(10**9)
 
 
 

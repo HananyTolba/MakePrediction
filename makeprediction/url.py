@@ -75,12 +75,15 @@ def kernel2url(kernel_str):
 
           ]
     if (kernel_str  in sub_models):
-        url_ec2 = os.path.join(simple_DomainName,kernel_str + "/v1/models/" + kernel_str + ":predict")
+        
+        #url_ec2 = os.path.join(simple_DomainName,kernel_str + "/v1/models/" + kernel_str + ":predict")
+        url_ec2 = os.path.join(simple_DomainName,kernel_str, "v1","models",kernel_str + ":predict")
 
     else:
         kernel_str_1d = kernel_str + "_1d"
-        url_ec2 = os.path.join(simple_DomainName,kernel_str + "/v1/models/" + kernel_str_1d + ":predict")
-  
+        #url_ec2 = os.path.join(simple_DomainName,kernel_str + "/v1/models/" + kernel_str_1d + ":predict")
+        url_ec2 = os.path.join(simple_DomainName,kernel_str, "v1","models", kernel_str_1d + ":predict")
+
     return url_ec2 
 
 def periodic2url(kernel_str, method = None):
@@ -94,8 +97,15 @@ def periodic2url(kernel_str, method = None):
             periodic_method = "periodic_model"
 
 
-        url_ec2_period = os.path.join(periodic_DomainName,periodic_method + "/v1/models/" + periodic_method + ":predict")
-        url_ec2_noise = os.path.join(periodic_DomainName,"iid_periodic_300" + "/v1/models/" + "iid_periodic_300" + ":predict")
-        url_ec2_ls = os.path.join(periodic_DomainName,"tf_Periodic_ls" + "/v1/models/" + "tf_Periodic_ls" + ":predict")
+        #url_ec2_period = os.path.join(periodic_DomainName,periodic_method + "/v1/models/" + periodic_method + ":predict")
+        url_ec2_period = os.path.join(periodic_DomainName,periodic_method, "v1","models", periodic_method + ":predict")
+
+        #url_ec2_noise = os.path.join(periodic_DomainName,"iid_periodic_300" + "/v1/models/" + "iid_periodic_300" + ":predict")
+        url_ec2_noise = os.path.join(periodic_DomainName,"iid_periodic_300", "v1","models", "iid_periodic_300" + ":predict")
+
+        #url_ec2_ls = os.path.join(periodic_DomainName,"tf_Periodic_ls" + "/v1/models/" + "tf_Periodic_ls" + ":predict")
+    
+        url_ec2_ls = os.path.join(periodic_DomainName,"tf_Periodic_ls", "v1","models", "tf_Periodic_ls" + ":predict")
+
     return url_ec2_period, url_ec2_ls, url_ec2_noise
 

@@ -2,9 +2,9 @@ import csv
 import time
 import datetime
 from makeprediction.invtools import date2num
+import numpy as np
 
-
-def rtts(function, step = 1, filename = None, fieldnames = None):
+def rtts(function, step = 1, filename = None, fieldnames = None, random_sleep = True):
     
     if fieldnames is None:
         fieldnames = ["date", "value"]
@@ -41,8 +41,10 @@ def rtts(function, step = 1, filename = None, fieldnames = None):
                 csv_writer.writerow(info)
                     #x = t
 
-
-                time.sleep((x-t).total_seconds())
+                if random_sleep:
+                    time.sleep(np.random.uniform(0,5,1)[0])
+                else:
+                    time.sleep((x-t).total_seconds())
                 print(info)
                 #print((x-t).total_seconds())
 

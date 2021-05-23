@@ -1412,7 +1412,8 @@ class QuasiGPR():
         skip_rows = df_realtime.shape[0]
         
         df_realtime[xname] = pd.to_datetime(df_realtime[xname])
-        
+        #df['dtime'] = pd.to_datetime(df['dtime']).apply(lambda x: x.replace(tzinfo=None)) #Remove the time zone
+
         
         
         #fieldnames = ["date", "y_pred","y_pred_std"]
@@ -1478,7 +1479,7 @@ class QuasiGPR():
 
                 
                     prediction = pd.DataFrame({'future':future,'ypred':ypred,'ypred_std': ypred_std,})
-                
+                    #print(prediction.head(1))
                 
 
                     file = os.path.join(dir_,filename)
@@ -1494,271 +1495,557 @@ class QuasiGPR():
 
 
     
-    
-    def deploy2dashbord(self,realtime_db = None, deployment_file = None, prediction_horizon = 1, max_horizon=None, freq = None, port = None, filename = None, return_value = False, refresh_time_in_milliseconds = 1000):
-        
-        if deployment_file is None:
-            deployment_file = 'deployment_file.csv'
-            
-        db_deploy = 'prediction_deployment'
-        db_deploy = os.path.join(db_deploy,deployment_file)
-        
-        kwargs = {'realtime_data':realtime_db , 'horizon' : max_horizon, 'freq' : freq, 'filename': deployment_file}
-        if realtime_db is None:
-            kwargs = {'horizon' : max_horizon, 'freq' : freq, 'filename': deployment_file}
 
-            process = multiprocessing.Process(target=self.deploy, kwargs = kwargs)
-            process.start()
-        else:
+
+
+
+
+    def deploy2dashbord(self,realtime_db = None, deployment_file = None, prediction_horizon = 1, max_horizon=None, freq = None, port = None, filename = None, return_value = False, refresh_time_in_milliseconds = 1000):
             
-            process = multiprocessing.Process(target=self.deploy,kwargs = kwargs)
-            process.start()
+            if deployment_file is None:
+                deployment_file = 'deployment_file.csv'
+                
+            db_deploy = 'prediction_deployment'
+            db_deploy = os.path.join(db_deploy,deployment_file)
+            
+            kwargs = {'realtime_data':realtime_db , 'horizon' : max_horizon, 'freq' : freq, 'filename': deployment_file}
+            if realtime_db is None:
+                kwargs = {'horizon' : max_horizon, 'freq' : freq, 'filename': deployment_file}
+
+                process = multiprocessing.Process(target=self.deploy, kwargs = kwargs)
+                process.start()
+            else:
+                
+                process = multiprocessing.Process(target=self.deploy,kwargs = kwargs)
+                process.start()
+               
+            
+            
+            if len(self._score) == 2:
+                RMSE_train = np.sqrt(self._score['train_errors']['MSE'])
+                RMSE_test = np.sqrt(self._score['test_errors']['MSE'])
+            else:
+                RMSE_train = np.sqrt(self._score['train_errors']['MSE'])
+
+
+
+            dir_ = 'predicted_horizon_files'
+            os.makedirs(dir_, exist_ok = True)
+
+
+            if filename is None:
+                filename = 'prediction_with_horizon_{}.csv'.format(prediction_horizon)
+                
+            filename = os.path.join(dir_,filename)
+
+            app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
+                        meta_tags=[{'name': 'viewport',
+                                    'content': 'width=device-width, initial-scale=1.0'}]
+                        )
+
+
+            #columns_df = realtime_db
+
+            df_realtime = pd.read_csv(realtime_db)
+            colNames = df_realtime.columns[:2]
+            xname, yname = colNames[0], colNames[1]
+            df = pd.DataFrame(columns=[xname, yname])
+
+            df_pred = pd.DataFrame(columns=['date', 'ypred','ypred_std'])
+
+            df_pred_horizon = pd.DataFrame(columns=['date', 'ypred_horizon','ypred_std_horizon'])
+            df_pred_horizon.to_csv(filename,  index=False)
+            
+            
+            logo = dbc.Col(dbc.CardImg(
+                                src="/assets/logo.png",style={"width": "6rem"},
+                                top=True,))
+            
+            app.layout = html.Div([dbc.Row([html.Div(logo,style = style_logo_left),dbc.Col(html.Div(html.H1("MakePrediction DashBoard", style = {"color":'#d35400',}),
+                                                                                            style = {'backgroundColor': '#e5ecf6',
+                                                                                            'padding': '30px 0 30px 0',
+                                                                                            'border': '2px solid green',
+                                                                                            'fontfamily': 'sans-serif',
+                                                                                            "textAlign": "center",
+                                                                                           }),width={'size': 8, 'offset': 0})
+                                            ,html.Div(logo,style = style_logo_right)]
+                        ),
+                dcc.Graph(
+                    id='graphid',
+                    figure={
+                        'data': [
+                            go.Scatter(x=df[xname], y=df[yname], mode = 'lines+markers')
+                        ],
+                        'layout': {
+                            'title': 'MakePrediction',
+                        },
+                    }
+                ),
+                                   
+                                html.Div([dbc.Row(
+                                    [dbc.Col(width={'size': 1, 'offset': 0}),dbc.Col(html.Div(html.H5("Realtime DataTable",style = {"color":'#d35400'}),style = style_text),
+                                width={'size': 3, 'offset': 1}),
+                                    dbc.Col(width={'size': 1, 'offset': 0}),
+                                    dbc.Col(html.Div(html.H5("Predicted DataTable",style = {"color":'#d35400'}),style = style_text),
+                                width={'size': 4, 'offset': 0})]
+                        )]),
+                                   
+                  dbc.Row([dbc.Col(width={'size': 1, 'offset': 0}), dbc.Col(DataTable(id='table',
+                                        data=[],
+                                        columns=[{'id': c, 'name': c} for c in df.columns],
+                                        style_cell = styleCell,
+                                        
+                                        style_header={'backgroundColor': '#e5ecf6','fontWeight': 'bold', 'color':'blue'},),
+                                        width={'size': 3, 'offset': 1},),
+                         dbc.Col(width={'size': 1, 'offset': 0}),
+                         dbc.Col(DataTable(id='table_pred',
+                                        data=[],
+                                        columns=[{'id': c, 'name': c} for c in df_pred.columns],
+                                        style_cell= styleCell ,
+                                        
+                                        style_header={'backgroundColor': '#e5ecf6','fontWeight': 'bold', 'color':'blue'},),
+                                        width={'size': 4, 'offset': 0})]),
+                                   
+                dcc.Interval(
+                    id='1-second-interval',
+                    interval=refresh_time_in_milliseconds, # 2000 milliseconds = 2 seconds
+                    n_intervals=0
+                ),
+                
+            ])
+
+            @app.callback(Output('graphid', 'figure'),
+                          [Input('1-second-interval', 'n_intervals')])
+            def update_layout(n):
+                
+                
+                if realtime_db is None:
+                    pass
+                else:
+                    path_db = realtime_db
+                    df = pd.read_csv(path_db)
+                    df[xname] = pd.to_datetime(df[xname])
+                   
+                path_db_pred = db_deploy
+                df_pred = pd.read_csv(path_db_pred)
+                df_pred.future = pd.to_datetime(df_pred.future)
+
+                f,yp,yp_std = df_pred.iloc[prediction_horizon - 1]
+                if f not in df_pred_horizon['date'].values:
+                    df_pred_horizon.loc[n] = [f,yp,yp_std]
+                    df_pred_horizon.to_csv(filename,  index=False)
+                #intersect_df = pd.merge(df, df_pred_horizon, how='inner', on='date')
+                intersect_df = pd.merge(df, df_pred_horizon, how='inner', left_on=[xname], right_on=['date'])
+
+                
+                
+                rmse = lambda predictions,targets: np.sqrt(np.mean((predictions-targets)**2))
+                
+                RMSE = rmse(intersect_df[yname],intersect_df.ypred_horizon)  
+                
+                if len(self._score)==2: 
+                    title = f'RMSE errors (train/test/realtime_test): {round(RMSE_train,3)}/{round(RMSE_test,3)}/{round(RMSE,3)}'
+                else:
+                    title = f'RMSE errors (train/realtime_test): {round(RMSE_train,3)}/{round(RMSE,3)}'
+
+                if realtime_db is None:
+                    pass
+                else:
+                    trace1 = go.Scatter(x=df[xname], y=df[yname], mode = 'lines+markers',
+                                      line_color = 'rgb(0,0,0)',
+                                        
+                                   name='Realtime data streaming')
+                trace2 = go.Scatter(x=df_pred['future'], y=df_pred['ypred'], mode = 'lines',
+                                      line_color = 'rgba(0,0,255,.8)',
+                                      name='Long-term prediction',)
+                trace3 = go.Scatter(x=df_pred_horizon['date'], y=df_pred_horizon['ypred_horizon'], 
+                                    mode = 'markers + lines',
+                                    name=f'Short-term prediction(prediction horizon = {prediction_horizon})',
+
+                                      line_color = 'rgba(255,0,0,.8)')
+                
+                
+                
+                
+                
+                xs_list = df_pred.future.tolist()
+                xs_rev = xs_list[::-1]
+                yp_upper = df_pred.ypred + 1.96*df_pred.ypred_std
+                yp_upper = yp_upper.tolist()
+                yp_lower = df_pred.ypred - 1.96*df_pred.ypred_std
+                yp_lower = yp_lower.tolist()
+                yp_lower_rev = yp_lower[::-1]
+
+
+
+                
+                trace4 = go.Scatter(
+                                    x =xs_list+xs_rev,
+                                    y=yp_upper+yp_lower_rev,
+                                    fill='toself',
+                                    fillcolor='rgba(255,0,0,.1)',
+                                    line_color='rgba(255,255,255,0)',
+                                    name='Confidence Interval (95%)',
+                                    showlegend=True,
+
+                                )
+                linedate = df[xname].iloc[-1]
+                now = datetime.datetime.now()
+                
+                if realtime_db is None:
+                    figure={
+                        'data': [ trace2, trace3,trace4,],
+                        'layout': {
+                            'title': 'MakePrediction deployement'
+                        }
+                    }
+                else:
+                    figure={
+                        'data': [trace1, trace2, trace3,trace4,],
+                        'layout': {
+                            'title': f'Realtime deployement ({linedate}):' + title,
+                            'font_color' : "blue",
+                            'title_font_color': "green",
+                            
+                             #'width':900,
+                            'height':600,
+
+                        }
+                    }
+                fig  = go.Figure(figure)
+                fig.update_layout(legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    font = dict(size = 14),
+                    x=1))
+
+                
+                
+                fig.update_xaxes({'title':xname})
+                fig.update_yaxes({'title':yname})
+                fig.update_layout(
+                                  shapes = [dict(x0=linedate, x1=linedate, y0=0, y1=1, xref='x', yref='paper',line_width=1,line=dict(
+                color="green",
+                width=.5,
+                dash="dashdot",
+            ))],)
+                
+
+                return fig
+            
+
+            @app.callback(
+            [Output("table", "data"), Output('table', 'columns')],
+            [Input('1-second-interval', 'n_intervals')])
+            def updateTable(n):
+                if realtime_db is None:
+                    pass
+                else:
+                    path_db = realtime_db
+                    df = pd.read_csv(path_db)
+                return df.tail().round(decimals = 3).values, [{"id": i, "name": df.columns[i].capitalize()} for i in range(df.shape[1])]
+            
+            
+            @app.callback(
+            [Output("table_pred", "data"), Output('table_pred', 'columns')],
+            [Input('1-second-interval', 'n_intervals')])
+            def updateTable_pred(n):
+                path_db_pred = db_deploy
+
+                df_pred = pd.read_csv(path_db_pred)
+                
+                return  df_pred.head().round(decimals = 3).values, [{"id": i, "name": '' + df_pred.columns[i].capitalize()} for i in range(df_pred.shape[1])]
+
+            if port is None:
+                port = 9412
+            
+            app.run_server(debug = False,port = port)
+                
+            if return_value:
+                return df_pred_horizon
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+    # def deploy2dashbord(self,realtime_db = None, deployment_file = None, prediction_horizon = 1, max_horizon=None, freq = None, port = None, filename = None, return_value = False, refresh_time_in_milliseconds = 1000):
+        
+    #     if deployment_file is None:
+    #         deployment_file = 'deployment_file.csv'
+            
+    #     db_deploy = 'prediction_deployment'
+    #     db_deploy = os.path.join(db_deploy,deployment_file)
+        
+    #     kwargs = {'realtime_data':realtime_db , 'horizon' : max_horizon, 'freq' : freq, 'filename': deployment_file}
+    #     if realtime_db is None:
+    #         kwargs = {'horizon' : max_horizon, 'freq' : freq, 'filename': deployment_file}
+
+    #         process = multiprocessing.Process(target=self.deploy, kwargs = kwargs)
+    #         process.start()
+    #     else:
+            
+    #         process = multiprocessing.Process(target=self.deploy,kwargs = kwargs)
+    #         process.start()
            
         
         
-        if len(self._score) == 2:
-            RMSE_train = np.sqrt(self._score['train_errors']['MSE'])
-            RMSE_test = np.sqrt(self._score['test_errors']['MSE'])
-        else:
-            RMSE_train = np.sqrt(self._score['train_errors']['MSE'])
+    #     if len(self._score) == 2:
+    #         RMSE_train = np.sqrt(self._score['train_errors']['MSE'])
+    #         RMSE_test = np.sqrt(self._score['test_errors']['MSE'])
+    #     else:
+    #         RMSE_train = np.sqrt(self._score['train_errors']['MSE'])
 
 
 
-        dir_ = 'predicted_horizon_files'
-        os.makedirs(dir_, exist_ok = True)
+    #     dir_ = 'predicted_horizon_files'
+    #     os.makedirs(dir_, exist_ok = True)
 
 
-        if filename is None:
-            filename = 'prediction_with_horizon_{}.csv'.format(prediction_horizon)
+    #     if filename is None:
+    #         filename = 'prediction_with_horizon_{}.csv'.format(prediction_horizon)
             
-        filename = os.path.join(dir_,filename)
+    #     filename = os.path.join(dir_,filename)
 
-        app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
-                    meta_tags=[{'name': 'viewport',
-                                'content': 'width=device-width, initial-scale=1.0'}]
-                    )
+    #     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP],
+    #                 meta_tags=[{'name': 'viewport',
+    #                             'content': 'width=device-width, initial-scale=1.0'}]
+    #                 )
 
 
-        #columns_df = realtime_db
+    #     #columns_df = realtime_db
 
-        df_realtime = pd.read_csv(realtime_db)
-        colNames = df_realtime.columns[:2]
-        xname, yname = colNames[0], colNames[1]
-        df = pd.DataFrame(columns=[xname, yname])
+    #     df_realtime = pd.read_csv(realtime_db)
+    #     colNames = df_realtime.columns[:2]
+    #     xname, yname = colNames[0], colNames[1]
+    #     df = pd.DataFrame(columns=[xname, yname])
 
-        df_pred = pd.DataFrame(columns=['date', 'ypred','ypred_std'])
+    #     df_pred = pd.DataFrame(columns=['date', 'ypred','ypred_std'])
 
-        df_pred_horizon = pd.DataFrame(columns=['date', 'ypred_horizon','ypred_std_horizon'])
-        df_pred_horizon.to_csv(filename,  index=False)
+    #     df_pred_horizon = pd.DataFrame(columns=['date', 'ypred_horizon','ypred_std_horizon'])
+    #     df_pred_horizon.to_csv(filename,  index=False)
         
         
-        logo = dbc.Col(dbc.CardImg(
-                            src="/assets/logo.png",style={"width": "6rem"},
-                            top=True,))
+    #     logo = dbc.Col(dbc.CardImg(
+    #                         src="/assets/logo.png",style={"width": "6rem"},
+    #                         top=True,))
         
-        app.layout = html.Div([dbc.Row([html.Div(logo,style = style_logo_left),dbc.Col(html.Div(html.H1("MakePrediction DashBoard", style = {"color":'#d35400',}),
-                                                                                        style = {'backgroundColor': '#e5ecf6',
-                                                                                        'padding': '30px 0 30px 0',
-                                                                                        'border': '2px solid green',
-                                                                                        'fontfamily': 'sans-serif',
-                                                                                        "textAlign": "center",
-                                                                                       }),width={'size': 8, 'offset': 0})
-                                        ,html.Div(logo,style = style_logo_right)]
-                    ),
-            dcc.Graph(
-                id='graphid',
-                figure={
-                    'data': [
-                        go.Scatter(x=df[xname], y=df[yname], mode = 'lines+markers')
-                    ],
-                    'layout': {
-                        'title': 'MakePrediction',
-                    },
-                }
-            ),
+    #     app.layout = html.Div([dbc.Row([html.Div(logo,style = style_logo_left),dbc.Col(html.Div(html.H1("MakePrediction DashBoard", style = {"color":'#d35400',}),
+    #                                                                                     style = {'backgroundColor': '#e5ecf6',
+    #                                                                                     'padding': '30px 0 30px 0',
+    #                                                                                     'border': '2px solid green',
+    #                                                                                     'fontfamily': 'sans-serif',
+    #                                                                                     "textAlign": "center",
+    #                                                                                    }),width={'size': 8, 'offset': 0})
+    #                                     ,html.Div(logo,style = style_logo_right)]
+    #                 ),
+    #         dcc.Graph(
+    #             id='graphid',
+    #             figure={
+    #                 'data': [
+    #                     go.Scatter(x=df[xname], y=df[yname], mode = 'lines+markers')
+    #                 ],
+    #                 'layout': {
+    #                     'title': 'MakePrediction',
+    #                 },
+    #             }
+    #         ),
                                
-                            html.Div([dbc.Row(
-                                [dbc.Col(width={'size': 1, 'offset': 0}),dbc.Col(html.Div(html.H5("Realtime DataTable",style = {"color":'#d35400'}),style = style_text),
-                            width={'size': 3, 'offset': 1}),
-                                dbc.Col(width={'size': 1, 'offset': 0}),
-                                dbc.Col(html.Div(html.H5("Predicted DataTable",style = {"color":'#d35400'}),style = style_text),
-                            width={'size': 4, 'offset': 0})]
-                    )]),
+    #                         html.Div([dbc.Row(
+    #                             [dbc.Col(width={'size': 1, 'offset': 0}),dbc.Col(html.Div(html.H5("Realtime DataTable",style = {"color":'#d35400'}),style = style_text),
+    #                         width={'size': 3, 'offset': 1}),
+    #                             dbc.Col(width={'size': 1, 'offset': 0}),
+    #                             dbc.Col(html.Div(html.H5("Predicted DataTable",style = {"color":'#d35400'}),style = style_text),
+    #                         width={'size': 4, 'offset': 0})]
+    #                 )]),
                                
-              dbc.Row([dbc.Col(width={'size': 1, 'offset': 0}), dbc.Col(DataTable(id='table',
-                                    data=[],
-                                    columns=[{'id': c, 'name': c} for c in df.columns],
-                                    style_cell = styleCell,
+    #           dbc.Row([dbc.Col(width={'size': 1, 'offset': 0}), dbc.Col(DataTable(id='table',
+    #                                 data=[],
+    #                                 columns=[{'id': c, 'name': c} for c in df.columns],
+    #                                 style_cell = styleCell,
                                     
-                                    style_header={'backgroundColor': '#e5ecf6','fontWeight': 'bold', 'color':'blue'},),
-                                    width={'size': 3, 'offset': 1},),
-                     dbc.Col(width={'size': 1, 'offset': 0}),
-                     dbc.Col(DataTable(id='table_pred',
-                                    data=[],
-                                    columns=[{'id': c, 'name': c} for c in df_pred.columns],
-                                    style_cell= styleCell ,
+    #                                 style_header={'backgroundColor': '#e5ecf6','fontWeight': 'bold', 'color':'blue'},),
+    #                                 width={'size': 3, 'offset': 1},),
+    #                  dbc.Col(width={'size': 1, 'offset': 0}),
+    #                  dbc.Col(DataTable(id='table_pred',
+    #                                 data=[],
+    #                                 columns=[{'id': c, 'name': c} for c in df_pred.columns],
+    #                                 style_cell= styleCell ,
                                     
-                                    style_header={'backgroundColor': '#e5ecf6','fontWeight': 'bold', 'color':'blue'},),
-                                    width={'size': 4, 'offset': 0})]),
+    #                                 style_header={'backgroundColor': '#e5ecf6','fontWeight': 'bold', 'color':'blue'},),
+    #                                 width={'size': 4, 'offset': 0})]),
                                
-            dcc.Interval(
-                id='1-second-interval',
-                interval=refresh_time_in_milliseconds, # 2000 milliseconds = 2 seconds
-                n_intervals=0
-            ),
+    #         dcc.Interval(
+    #             id='1-second-interval',
+    #             interval=refresh_time_in_milliseconds, # 2000 milliseconds = 2 seconds
+    #             n_intervals=0
+    #         ),
             
-        ])
+    #     ])
 
-        @app.callback(Output('graphid', 'figure'),
-                      [Input('1-second-interval', 'n_intervals')])
-        def update_layout(n):
+    #     @app.callback(Output('graphid', 'figure'),
+    #                   [Input('1-second-interval', 'n_intervals')])
+    #     def update_layout(n):
             
             
-            if realtime_db is None:
-                pass
-            else:
-                path_db = realtime_db
-                df = pd.read_csv(path_db)
-                df[xname] = pd.to_datetime(df[xname])
+    #         if realtime_db is None:
+    #             pass
+    #         else:
+    #             path_db = realtime_db
+    #             df = pd.read_csv(path_db)
+    #             df[xname] = pd.to_datetime(df[xname])
                
-            path_db_pred = db_deploy
-            df_pred = pd.read_csv(path_db_pred)
-            df_pred.future = pd.to_datetime(df_pred.future)
+    #         path_db_pred = db_deploy
+    #         df_pred = pd.read_csv(path_db_pred)
+    #         df_pred.future = pd.to_datetime(df_pred.future)
 
-            f,yp,yp_std = df_pred.iloc[prediction_horizon - 1]
-            if f not in df_pred_horizon['date'].values:
-                df_pred_horizon.loc[n] = [f,yp,yp_std]
-                df_pred_horizon.to_csv(filename,  index=False)
-            #intersect_df = pd.merge(df, df_pred_horizon, how='inner', on='date')
-            intersect_df = pd.merge(df, df_pred_horizon, how='inner', left_on=[xname], right_on=['date'])
+    #         f,yp,yp_std = df_pred.iloc[prediction_horizon - 1]
+    #         if f not in df_pred_horizon['date'].values:
+    #             df_pred_horizon.loc[n] = [f,yp,yp_std]
+    #             df_pred_horizon.to_csv(filename,  index=False)
+    #         #intersect_df = pd.merge(df, df_pred_horizon, how='inner', on='date')
+    #         intersect_df = pd.merge(df, df_pred_horizon, how='inner', left_on=[xname], right_on=['date'])
 
             
             
-            rmse = lambda predictions,targets: np.sqrt(np.mean((predictions-targets)**2))
+    #         rmse = lambda predictions,targets: np.sqrt(np.mean((predictions-targets)**2))
             
-            RMSE = rmse(intersect_df[yname],intersect_df.ypred_horizon)  
+    #         RMSE = rmse(intersect_df[yname],intersect_df.ypred_horizon)  
             
-            if len(self._score)==2: 
-                title = f'RMSE errors (train/test/realtime_test): {round(RMSE_train,3)}/{round(RMSE_test,3)}/{round(RMSE,3)}'
-            else:
-                title = f'RMSE errors (train/realtime_test): {round(RMSE_train,3)}/{round(RMSE,3)}'
+    #         if len(self._score)==2: 
+    #             title = f'RMSE errors (train/test/realtime_test): {round(RMSE_train,3)}/{round(RMSE_test,3)}/{round(RMSE,3)}'
+    #         else:
+    #             title = f'RMSE errors (train/realtime_test): {round(RMSE_train,3)}/{round(RMSE,3)}'
 
-            if realtime_db is None:
-                pass
-            else:
-                trace1 = go.Scatter(x=df[xname], y=df[yname], mode = 'lines+markers',
-                                  line_color = 'rgb(0,0,0)',
+    #         if realtime_db is None:
+    #             pass
+    #         else:
+    #             trace1 = go.Scatter(x=df[xname], y=df[yname], mode = 'lines+markers',
+    #                               line_color = 'rgb(0,0,0)',
                                     
-                               name='Realtime data streaming')
-            trace2 = go.Scatter(x=df_pred['future'], y=df_pred['ypred'], mode = 'lines',
-                                  line_color = 'rgba(0,0,255,.8)',
-                                  name='Long-term prediction',)
-            trace3 = go.Scatter(x=df_pred_horizon['date'], y=df_pred_horizon['ypred_horizon'], 
-                                mode = 'markers + lines',
-                                name=f'Short-term prediction(prediction horizon = {prediction_horizon})',
+    #                            name='Realtime data streaming')
+    #         trace2 = go.Scatter(x=df_pred['future'], y=df_pred['ypred'], mode = 'lines',
+    #                               line_color = 'rgba(0,0,255,.8)',
+    #                               name='Long-term prediction',)
+    #         trace3 = go.Scatter(x=df_pred_horizon['date'], y=df_pred_horizon['ypred_horizon'], 
+    #                             mode = 'markers + lines',
+    #                             name=f'Short-term prediction(prediction horizon = {prediction_horizon})',
 
-                                  line_color = 'rgba(255,0,0,.8)')
+    #                               line_color = 'rgba(255,0,0,.8)')
             
             
             
             
             
-            xs_list = df_pred.future.tolist()
-            xs_rev = xs_list[::-1]
-            yp_upper = df_pred.ypred + 1.96*df_pred.ypred_std
-            yp_upper = yp_upper.tolist()
-            yp_lower = df_pred.ypred - 1.96*df_pred.ypred_std
-            yp_lower = yp_lower.tolist()
-            yp_lower_rev = yp_lower[::-1]
+    #         xs_list = df_pred.future.tolist()
+    #         xs_rev = xs_list[::-1]
+    #         yp_upper = df_pred.ypred + 1.96*df_pred.ypred_std
+    #         yp_upper = yp_upper.tolist()
+    #         yp_lower = df_pred.ypred - 1.96*df_pred.ypred_std
+    #         yp_lower = yp_lower.tolist()
+    #         yp_lower_rev = yp_lower[::-1]
 
 
 
             
-            trace4 = go.Scatter(
-                                x =xs_list+xs_rev,
-                                y=yp_upper+yp_lower_rev,
-                                fill='toself',
-                                fillcolor='rgba(255,0,0,.1)',
-                                line_color='rgba(255,255,255,0)',
-                                name='Confidence Interval (95%)',
-                                showlegend=True,
+    #         trace4 = go.Scatter(
+    #                             x =xs_list+xs_rev,
+    #                             y=yp_upper+yp_lower_rev,
+    #                             fill='toself',
+    #                             fillcolor='rgba(255,0,0,.1)',
+    #                             line_color='rgba(255,255,255,0)',
+    #                             name='Confidence Interval (95%)',
+    #                             showlegend=True,
 
-                            )
-            linedate = df[xname].iloc[-1]
-            now = datetime.datetime.now()
+    #                         )
+    #         linedate = df[xname].iloc[-1]
+    #         now = datetime.datetime.now()
             
-            if realtime_db is None:
-                figure={
-                    'data': [ trace2, trace3,trace4,],
-                    'layout': {
-                        'title': 'MakePrediction deployement'
-                    }
-                }
-            else:
-                figure={
-                    'data': [trace1, trace2, trace3,trace4,],
-                    'layout': {
-                        'title': f'Realtime deployement ({linedate}):' + title,
-                        'font_color' : "blue",
-                        'title_font_color': "green",
+    #         if realtime_db is None:
+    #             figure={
+    #                 'data': [ trace2, trace3,trace4,],
+    #                 'layout': {
+    #                     'title': 'MakePrediction deployement'
+    #                 }
+    #             }
+    #         else:
+    #             figure={
+    #                 'data': [trace1, trace2, trace3,trace4,],
+    #                 'layout': {
+    #                     'title': f'Realtime deployement ({linedate}):' + title,
+    #                     'font_color' : "blue",
+    #                     'title_font_color': "green",
                         
-                         #'width':900,
-                        'height':600,
+    #                      #'width':900,
+    #                     'height':600,
 
-                    }
-                }
-            fig  = go.Figure(figure)
-            fig.update_layout(legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="right",
-                font = dict(size = 14),
-                x=1))
+    #                 }
+    #             }
+    #         fig  = go.Figure(figure)
+    #         fig.update_layout(legend=dict(
+    #             orientation="h",
+    #             yanchor="bottom",
+    #             y=1.02,
+    #             xanchor="right",
+    #             font = dict(size = 14),
+    #             x=1))
 
             
             
-            fig.update_xaxes({'title':xname})
-            fig.update_yaxes({'title':yname})
-            fig.update_layout(
-                              shapes = [dict(x0=linedate, x1=linedate, y0=0, y1=1, xref='x', yref='paper',line_width=1,line=dict(
-            color="green",
-            width=.5,
-            dash="dashdot",
-        ))],)
+    #         fig.update_xaxes({'title':xname})
+    #         fig.update_yaxes({'title':yname})
+    #         fig.update_layout(
+    #                           shapes = [dict(x0=linedate, x1=linedate, y0=0, y1=1, xref='x', yref='paper',line_width=1,line=dict(
+    #         color="green",
+    #         width=.5,
+    #         dash="dashdot",
+    #     ))],)
             
 
-            return fig
+    #         return fig
         
 
-        @app.callback(
-        [Output("table", "data"), Output('table', 'columns')],
-        [Input('1-second-interval', 'n_intervals')])
-        def updateTable(n):
-            if realtime_db is None:
-                pass
-            else:
-                path_db = realtime_db
-                df = pd.read_csv(path_db)
-            return df.tail().round(decimals = 3).values, [{"id": i, "name": df.columns[i].capitalize()} for i in range(df.shape[1])]
+    #     @app.callback(
+    #     [Output("table", "data"), Output('table', 'columns')],
+    #     [Input('1-second-interval', 'n_intervals')])
+    #     def updateTable(n):
+    #         if realtime_db is None:
+    #             pass
+    #         else:
+    #             path_db = realtime_db
+    #             df = pd.read_csv(path_db)
+    #         return df.tail().values, [{"id": i, "name": df.columns[i].capitalize()} for i in range(df.shape[1])]
         
         
-        @app.callback(
-        [Output("table_pred", "data"), Output('table_pred', 'columns')],
-        [Input('1-second-interval', 'n_intervals')])
-        def updateTable_pred(n):
-            path_db_pred = db_deploy
+    #     @app.callback(
+    #     [Output("table_pred", "data"), Output('table_pred', 'columns')],
+    #     [Input('1-second-interval', 'n_intervals')])
+    #     def updateTable_pred(n):
+    #         path_db_pred = db_deploy
 
-            df_pred = pd.read_csv(path_db_pred)
+    #         df_pred = pd.read_csv(path_db_pred)
             
-            return  df_pred.head().round(decimals = 3).values, [{"id": i, "name": '' + df_pred.columns[i].capitalize()} for i in range(df_pred.shape[1])]
+    #         return  df_pred.head().values, [{"id": i, "name": '' + df_pred.columns[i].capitalize()} for i in range(df_pred.shape[1])]
 
-        if port is None:
-            port = 9412
+    #     if port is None:
+    #         port = 9412
         
-        app.run_server(debug = False,port = port)
+    #     app.run_server(debug = False,port = port)
             
-        if return_value:
-            return df_pred_horizon
+    #     if return_value:
+    #         return df_pred_horizon
         
-            
+    #         
