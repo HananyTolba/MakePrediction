@@ -26,7 +26,7 @@ from copy import copy, deepcopy
 import csv
 import multiprocessing
 
-#logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 import pandas as pd 
 import itertools
@@ -991,7 +991,7 @@ class QuasiGPR():
 
 
 
-    def autofit(self,max_periodic = 2,  stationary_kernel = None, size = None):
+    def autofit(self,max_periodic = 2,  stationary_kernel = None):
         x,y = self._xtrain, self._ytrain 
 
         #if max_periodic is None:
@@ -1006,7 +1006,7 @@ class QuasiGPR():
         if decision == "Linear":
             model = GPR(x,y)
             model.kernel_choice = "Linear"
-            model.fit(size = size)
+            model.fit()
             copy_model = deepcopy(model)
             
                 
@@ -1032,10 +1032,10 @@ class QuasiGPR():
             if dec1 == 'Periodic':
                 periodic_number+=1
 
-                model.fit(size = size)
+                model.fit(method = 'inter')
                 period = model.get_hyperparameters()["period"]
                 if np.abs(period - period_0)<.01:
-                    model.fit(size = size)
+                    model.fit()
 
 
                     
@@ -1055,7 +1055,7 @@ class QuasiGPR():
                 
         model = GPR(x,y)
         model.kernel_choice =  stationary_kernel
-        model.fit(size = size)
+        model.fit()
         copy_model = deepcopy(model)
 
         models.append(copy_model)
@@ -1076,7 +1076,7 @@ class QuasiGPR():
 
 
 
-    def fit(self, method=None, max_periodic = None,  stationary_kernel = None, size = None):
+    def fit(self, method=None, max_periodic = None,  stationary_kernel = None):
         xtrain = self._xtrain
         ytrain = self._ytrain
 
@@ -1087,7 +1087,7 @@ class QuasiGPR():
             stationary_kernel = 'Matern32'
 
         if self._kernel is None:
-            return self.autofit(max_periodic,  stationary_kernel, size =size)
+            return self.autofit(max_periodic,  stationary_kernel)
             
         kernel_expr = self._kernel
 
@@ -1122,9 +1122,9 @@ class QuasiGPR():
                 model = GPR(xtrain,ytrain)
                 model.kernel_choice = ker
                 if isinstance(methods_list, list):
-                    model.fit(methods_list[ii], size = size)
+                    model.fit(methods_list[ii])
                 else:
-                    model.fit(methods_list, size = size)
+                    model.fit(methods_list)
 
 
                 copy_kernel_model = copy(model._kernel)
@@ -1160,7 +1160,7 @@ class QuasiGPR():
 
             model = GPR(xtrain,ytrain)
             model.kernel_choice = kernel_expr.label()
-            model.fit(method, size = size)
+            model.fit(method)
             if "_model" in model.__dict__.keys():
                 model.__dict__.pop("_model")
             #model.__dict__.pop("_model")

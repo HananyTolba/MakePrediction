@@ -18,8 +18,9 @@
 
 
 
-# import logging
-# logging.basicConfig(level=logging.ERROR)
+import logging
+logging.basicConfig(level=logging.ERROR)
+
 
 import matplotlib.pyplot as plt
 import importlib
@@ -637,12 +638,10 @@ class GaussianProcessRegressor():
 
        # SMALL_SIZE_NEW= 300
         if size is None:
-            size = len(x)
-            x_inter = x
-            y_resample = y
-        else:
-            x_inter = np.linspace(x[0],  x[-1],size)
-            y_resample = np.interp(x_inter, x, y)
+            size = SMALL_SIZE
+
+        x_inter = np.linspace(x[0],  x[-1],size)
+        y_resample = np.interp(x_inter, x, y)
      
         
         #y_resample = scipy.signal.resample(y,SMALL_SIZE)
@@ -674,19 +673,7 @@ class GaussianProcessRegressor():
 
 
     
-    def get_lh(self,v,size = None):
-        # if size is  None:
-        #     size = SMALL_SIZE
-        try:
-            lh = self.log_lh_stable(v,size = size)
-        except Exception as e:
-           # print(e)
-            lh = np.inf
-    #print(lh)
-   # r = dict(zip(['pid','value','process_name'],[v,os.getpid(), lh]))
-   # print(r)
 
-        return v, lh
 
 
 
@@ -712,7 +699,7 @@ class GaussianProcessRegressor():
 
     
 
-    def fit(self,method = None, size = None):
+    def fit(self,method = None):
         '''
         This method allows the estimation of the hyperparameters of the GPR model.
         '''
@@ -736,44 +723,38 @@ class GaussianProcessRegressor():
                
 
                 hyp_dict_list= thread_fit(self)
-              # Je retravail celui là  
-               # periods = [hyp[0]['period'],hyp_dict_list[0]['period']]
-                periods = [w['period'] for w in hyp_dict_list]
+                #print("my print", hyp_dict)
+                p_list = [h["period"] for h in hyp_dict_list]
+                p_list_values = []
+                for pp in p_list:
+                    try:
+                        r = self.log_lh_stable(p,self._sigma_n)
+                        p_list_values.append(r)
+                    except:
+                        p_list_values.append(10**9)
 
 
-                periods_lh = [self.get_lh(period) for period in periods]
-                periods_lh = np.array(periods_lh)
-                print(periods)
-                print(periods_lh)
 
-                p_est = periods[np.argmin(periods_lh[:,1])]
-                print('period init: ',p_est)
-                hyp_dict = hyp_dict_list[np.argmin(periods_lh[:,1])]
+                #p_list_values = [self.log_lh_stable(p,self._sigma_n) for p in p_list]
+                #p_list_values = [self.log_lh_stable(p) for p in p_list]
 
-                if p_est<.01:
-                    rayon = .001
-                elif p_est<.1:
-                    rayon = .005
-                else:
-                    rayon = .01
-               # print('rayon = ',rayon )
-    
-                params = np.linspace(p_est - rayon,p_est + rayon,100)
-                params = np.hstack([params, p_est] )
-                params = np.sort(params)
-                results =[] 
-               # ts = time.time()
-    
-                for i in tqdm(range(params.shape[0])):
-                    results.append(self.get_lh(params[i],size = size))
-       
-                results = np.array(results)
+                #print("Period list : ", p_list)
+                hyp_dict = hyp_dict_list[np.argmin(p_list_values)]
 
-                optimal_period = results[np.argmin(results[:,1]),0] 
-                print('found period is: ',optimal_period)
-                hyp_dict['period'] = optimal_period
+                try:
+                    res = minimize(self.log_lh_stable, x0 = hyp_dict["period"] , method='Nelder-Mead',options={'maxiter': 100, 'ftol': 1e-7})
+                    #res = minimize(self.log_lh_stable, x0 = .07 , method='Nelder-Mead',options={'maxiter': 100, 'ftol': 1e-5})
 
+                    #p_optimal = np.round(res.x.ravel()[0],3)
+                    p_optimal = res.x.ravel()[0]
+                except LinAlgError:
+                    p_optimal = hyp_dict["period"] 
+                except:
+                    p_optimal = hyp_dict["period"] 
+                
+                hyp_dict["period"] = p_optimal
 
+                #print("Estimated parms ", hyp_dict)
 
                 self.set_hyperparameters(hyp_dict)
 
