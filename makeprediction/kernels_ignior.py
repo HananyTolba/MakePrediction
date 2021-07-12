@@ -30,6 +30,7 @@ __all__ = ["RBF",
            "Periodic",
            "Linear",
            "Polynomial",
+           "Cosine",
           
 
 
@@ -768,14 +769,14 @@ class Matern52(Kernel):
         return self._variance*kernel
 
 
-# class Cosine(Kernel):
+class Cosine(Kernel):
+   
+    def count(self, x, y=None):
+        """Stationary covariance function for a sinusoid."""
+        r = self.radial_dist(x, y)
 
-#     def count(self, x, y=None):
-#         """Stationary covariance function for a sinusoid."""
-#         r = self.radial_dist(x, y)
-
-#         kernel = np.cos(np.pi * r / self._length_scale)
-#         return kernel
+        kernel = np.cos(np.pi * r / self._length_scale)
+        return self._variance*kernel
 
 
 class Periodic(Kernel):

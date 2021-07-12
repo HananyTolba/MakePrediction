@@ -625,7 +625,7 @@ class GaussianProcessRegressor():
             return x[ind], y[ind]
 
 
-    def log_lh_stable(self, theta, noise = None,size = None):
+    def log_lh_stable(self, theta, noise = None,size = None, train_size = None):
         if noise is None:
             noise = .1
 
@@ -636,6 +636,11 @@ class GaussianProcessRegressor():
         #noise = self._sigma_n
 
        # SMALL_SIZE_NEW= 300
+        if train_size is None:
+            size = int(.25*len(x))
+        else:
+            size = int(train_size * len(x))
+
         if size is None:
             size = len(x)
             x_inter = x
@@ -687,6 +692,30 @@ class GaussianProcessRegressor():
    # print(r)
 
         return v, lh
+
+    def period_generator(self,size= None, train_size = None, rayon = .001, precision = 99):
+
+
+        hyp_dict_list= thread_fit(self)
+
+        periods = [w['period'] for w in hyp_dict_list]
+        periods_lh = [self.get_lh(period)[1] for period in periods]
+        #periods_lh = np.array(periods_lh)
+
+        lh_min = np.argmin(periods_lh)
+        p_est = periods[lh_min]
+        hyp_dict = hyp_dict_list[lh_min]
+
+       
+
+        params = np.linspace(p_est - rayon,p_est + rayon,precision)
+        params = np.hstack([params, p_est] )
+        params = np.sort(params)
+
+
+        for p in params:
+            yield self.get_lh(p,size = size)
+
 
 
 
@@ -743,11 +772,11 @@ class GaussianProcessRegressor():
 
                 periods_lh = [self.get_lh(period) for period in periods]
                 periods_lh = np.array(periods_lh)
-                print(periods)
-                print(periods_lh)
+                #print(periods)
+                #print(periods_lh)
 
                 p_est = periods[np.argmin(periods_lh[:,1])]
-                print('period init: ',p_est)
+                #print('period init: ',p_est)
                 hyp_dict = hyp_dict_list[np.argmin(periods_lh[:,1])]
 
                 if p_est<.01:
@@ -755,22 +784,23 @@ class GaussianProcessRegressor():
                 elif p_est<.1:
                     rayon = .005
                 else:
-                    rayon = .01
+                    rayon = .05
                # print('rayon = ',rayon )
     
-                params = np.linspace(p_est - rayon,p_est + rayon,100)
+                params = np.linspace(p_est - rayon,p_est + rayon,99)
                 params = np.hstack([params, p_est] )
                 params = np.sort(params)
                 results =[] 
                # ts = time.time()
     
                 for i in tqdm(range(params.shape[0])):
+                    #yield self.get_lh(params[i],size = size) 
                     results.append(self.get_lh(params[i],size = size))
        
                 results = np.array(results)
 
                 optimal_period = results[np.argmin(results[:,1]),0] 
-                print('found period is: ',optimal_period)
+                #print('found period is: ',optimal_period)
                 hyp_dict['period'] = optimal_period
 
 
